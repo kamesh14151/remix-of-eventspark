@@ -38,7 +38,7 @@ export function useEventBySlug(slug: string | undefined) {
   return useQuery({
     queryKey: ["event-slug", slug],
     queryFn: async () => {
-      const { data, error } = await supabase.from("events").select("*").eq("slug", slug!).single();
+      const { data, error } = await supabase.from("events").select("*").eq("slug", slug!).eq("status", "live").single();
       if (error) throw error;
       return data as Event;
     },

@@ -164,7 +164,7 @@ const RegistrationForm = ({
 const FlyerImage = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string | null; eventName: string; className?: string }) => (
   flyerUrl ? (
     <div className={`flex items-start justify-center bg-muted ${className}`}>
-      <img src={flyerUrl} alt={eventName} className="w-full h-full object-contain" />
+      <img src={flyerUrl} alt={eventName} className="w-full h-auto object-contain" />
     </div>
   ) : null
 );
@@ -290,9 +290,9 @@ const Register = () => {
     return wrapDark(
       <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
         {/* Left: flyer image — top-aligned on mobile */}
-        <div className="md:w-1/2 bg-muted flex items-start md:items-center justify-center p-0 md:p-6 min-h-[250px] md:min-h-screen">
+        <div className="md:w-1/2 bg-muted flex items-start md:items-center justify-center p-0 md:p-6">
           {flyerUrl ? (
-            <img src={flyerUrl} alt={event.name} className="w-full md:max-w-full md:max-h-full object-contain md:rounded-lg" />
+            <img src={flyerUrl} alt={event.name} className="w-full h-auto object-contain md:rounded-lg" />
           ) : (
             <div className="text-center p-6">
               <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
@@ -303,8 +303,8 @@ const Register = () => {
           )}
         </div>
         {/* Right: form */}
-        <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-[85%]">
+        <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12 overflow-y-auto">
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-md">
             <EventInfo event={event} className="mb-8" />
             <RegistrationForm {...formProps} />
             <PoweredBy />
@@ -347,10 +347,10 @@ const Register = () => {
   if (template === "landing") {
     return wrapDark(
       <div className="min-h-screen bg-background text-foreground">
-        <div className="relative w-full flex items-start justify-center" style={{ minHeight: "50vh" }}>
+        <div className="relative w-full flex items-start justify-center" style={{ minHeight: "40vh" }}>
           {flyerUrl ? (
             <>
-              <img src={flyerUrl} alt={event.name} className="absolute inset-0 w-full h-full object-contain" />
+              <img src={flyerUrl} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/60" />
             </>
           ) : (
