@@ -457,6 +457,7 @@ const CreateEvent = () => {
                           <SelectItem value="webinar">Webinar</SelectItem>
                           <SelectItem value="conference">Conference</SelectItem>
                           <SelectItem value="workshop">Workshop</SelectItem>
+                          <SelectItem value="hackathon">Hackathon</SelectItem>
                           <SelectItem value="meetup">Meetup</SelectItem>
                           <SelectItem value="launch">Product Launch</SelectItem>
                         </SelectContent>
