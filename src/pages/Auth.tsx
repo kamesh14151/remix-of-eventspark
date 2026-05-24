@@ -225,6 +225,9 @@ const Auth = () => {
         <p className="text-center text-xs text-muted-foreground mt-6">
           By continuing, you agree to our Terms of Service and Privacy Policy.
         </p>
+        <p className="text-center text-xs text-muted-foreground/60 mt-3">
+          Developed by <span className="font-semibold text-muted-foreground">AJ STUDIOZ</span>
+        </p>
       </motion.div>
     </div>
   );
