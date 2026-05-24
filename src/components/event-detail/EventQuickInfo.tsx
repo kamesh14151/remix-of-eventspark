@@ -50,14 +50,14 @@ export default function EventQuickInfo({ event, onUpdate }: Props) {
     <div className="bg-card rounded-xl p-4 sm:p-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Left column: Event Image */}
-        <div className="space-y-2">
-          <div className="w-full aspect-[16/10] lg:h-full lg:aspect-auto min-h-[200px] rounded-xl overflow-hidden bg-muted flex items-center justify-center relative group">
+        <div className="space-y-2 flex items-center justify-center">
+          <div className="w-full max-w-[300px] aspect-square rounded-xl overflow-hidden bg-muted flex items-center justify-center relative group">
             {event.background_image_url ? (
               <>
                 <img
                   src={event.background_image_url}
                   alt={event.name}
-                  className="w-full h-full object-contain object-top"
+                  className="w-full h-full object-contain"
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button variant="secondary" size="sm" className="h-8 text-xs rounded-full" onClick={() => fileInputRef.current?.click()}>
@@ -108,9 +108,9 @@ export default function EventQuickInfo({ event, onUpdate }: Props) {
               <FileText className="w-3 h-3" /> Description
             </Label>
             <Textarea
-              className="text-sm min-h-[120px] resize-y rounded-2xl"
+              className="text-sm min-h-[80px] resize-y rounded-2xl"
               defaultValue={event.description || ""}
-              rows={5}
+              rows={3}
               onBlur={(e) => onUpdate({ description: e.target.value || null })}
             />
           </div>
