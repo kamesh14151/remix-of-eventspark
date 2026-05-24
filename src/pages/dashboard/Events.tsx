@@ -46,12 +46,12 @@ const Events = () => {
         onClick={() => navigate(`/dashboard/events/${event.id}`)}
       >
         {/* Image */}
-        <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-muted mb-3">
+        <div className="relative aspect-square rounded-xl overflow-hidden bg-muted mb-3">
           {event.background_image_url ? (
             <img
               src={event.background_image_url}
               alt={event.name}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
