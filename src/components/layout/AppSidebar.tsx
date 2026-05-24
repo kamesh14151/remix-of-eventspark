@@ -130,6 +130,11 @@ export function AppSidebar() {
             <LogOut className="w-4 h-4" />
           </Button>
         )}
+        {!collapsed && (
+          <p className="text-[10px] text-sidebar-foreground/40 text-center mt-2">
+            by <span className="font-medium text-sidebar-foreground/60">AJ STUDIOZ</span>
+          </p>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
