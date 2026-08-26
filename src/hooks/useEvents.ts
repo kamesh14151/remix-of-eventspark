@@ -38,14 +38,25 @@ export function useEventBySlug(slug: string | undefined) {
   return useQuery({
     queryKey: ["event-slug", slug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: event, error } = await supabase
         .from("events")
-        .select("*, profiles!events_user_id_fkey(company, full_name)")
+        .select("*")
         .eq("slug", slug!)
         .eq("status", "live")
         .single();
       if (error) throw error;
-      return data as Event & { profiles?: { company: string | null; full_name: string | null } };
+      
+      let hostProfile = null;
+      if (event && event.user_id) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("company, full_name")
+          .eq("id", event.user_id)
+          .single();
+        hostProfile = profileData;
+      }
+      
+      return { ...event, profiles: hostProfile } as Event & { profiles?: { company: string | null; full_name: string | null } };
     },
     enabled: !!slug,
   });
