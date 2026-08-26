@@ -4,9 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, UserPlus, UserMinus, Users } from "lucide-react";
 import { useEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/useEvents";
 import { useFormFields, useAddFormField, useDeleteFormField } from "@/hooks/useFormFields";
+import { useEventMembers, useInviteMember, useRemoveMember } from "@/hooks/useEventMembers";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,14 +21,21 @@ import EventQRCode from "@/components/event-detail/EventQRCode";
 const EventDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: event, isLoading } = useEvent(id);
   const { data: formFields } = useFormFields(id);
+  const { data: members, isLoading: membersLoading } = useEventMembers(id);
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
   const addField = useAddFormField();
   const deleteField = useDeleteFormField();
+  const inviteMember = useInviteMember();
+  const removeMember = useRemoveMember();
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
+  const [inviteEmail, setInviteEmail] = useState("");
+
+  const isOwner = event?.user_id === user?.id;
 
   if (isLoading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -74,6 +83,7 @@ const EventDetail = () => {
         <TabsList className="bg-muted rounded-full p-1 w-full sm:w-auto">
           <TabsTrigger value="branding" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Branding</TabsTrigger>
           <TabsTrigger value="form" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Reg. form</TabsTrigger>
+          <TabsTrigger value="team" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Team</TabsTrigger>
           <TabsTrigger value="settings" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Settings</TabsTrigger>
         </TabsList>
 
@@ -192,6 +202,116 @@ const EventDetail = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="team" className="mt-5">
+          <div className="bg-card rounded-xl p-5 sm:p-6 space-y-5">
+            <div>
+              <h3 className="font-display font-semibold">Team members</h3>
+              <p className="text-sm text-muted-foreground mt-1">Invite other accounts to co-manage this event and view its attendees.</p>
+            </div>
+
+            {/* Owner badge */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
+                {user?.email?.[0]?.toUpperCase() ?? "O"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">Owner</p>
+              </div>
+              <Badge variant="outline" className="rounded-full text-xs shrink-0">Owner</Badge>
+            </div>
+
+            {/* Current members */}
+            {membersLoading ? (
+              <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+            ) : members && members.length > 0 ? (
+              <div className="space-y-2">
+                {members.map((m) => (
+                  <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                    <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary-foreground font-semibold text-sm shrink-0">
+                      {(m.email?.[0] ?? "?").toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{m.email}</p>
+                      <p className="text-xs text-muted-foreground">Member</p>
+                    </div>
+                    {isOwner && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
+                        disabled={removeMember.isPending}
+                        onClick={async () => {
+                          try {
+                            await removeMember.mutateAsync({ eventId: event.id, userId: m.user_id });
+                            toast.success("Member removed");
+                          } catch (err: any) {
+                            toast.error(err.message || "Failed to remove member");
+                          }
+                        }}
+                      >
+                        <UserMinus className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-sm text-muted-foreground">
+                <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                No team members yet.
+              </div>
+            )}
+
+            {/* Invite form — only owner can invite */}
+            {isOwner && (
+              <div className="border-t border-border pt-4 space-y-3">
+                <Label className="text-sm font-medium">Invite by email</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="colleague@example.com"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                    className="flex-1 rounded-full"
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (!inviteEmail.trim()) return;
+                        try {
+                          await inviteMember.mutateAsync({ eventId: event.id, email: inviteEmail.trim() });
+                          toast.success(`${inviteEmail} added as team member`);
+                          setInviteEmail("");
+                        } catch (err: any) {
+                          toast.error(err.message || "Invite failed");
+                        }
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="outline"
+                    className="rounded-full shrink-0"
+                    disabled={inviteMember.isPending || !inviteEmail.trim()}
+                    onClick={async () => {
+                      if (!inviteEmail.trim()) return;
+                      try {
+                        await inviteMember.mutateAsync({ eventId: event.id, email: inviteEmail.trim() });
+                        toast.success(`${inviteEmail} added as team member`);
+                        setInviteEmail("");
+                      } catch (err: any) {
+                        toast.error(err.message || "Invite failed");
+                      }
+                    }}
+                  >
+                    {inviteMember.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><UserPlus className="w-4 h-4 mr-1" /> Invite</>}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">The person must already have an account. They'll instantly see this event on their dashboard.</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="settings" className="mt-5">
           <div className="bg-card rounded-xl p-5 sm:p-6 space-y-4">
             <h3 className="font-display font-semibold">Event settings</h3>
@@ -205,9 +325,11 @@ const EventDetail = () => {
                 <Input type="date" defaultValue={event.registration_deadline?.split("T")[0] || ""} onBlur={e => handleUpdate({ registration_deadline: e.target.value || null })} className="rounded-full" />
               </div>
             </div>
-            <Button variant="destructive" size="sm" className="mt-4 rounded-full" onClick={handleDelete}>
-              <Trash2 className="w-4 h-4 mr-2" /> Delete event
-            </Button>
+            {isOwner && (
+              <Button variant="destructive" size="sm" className="mt-4 rounded-full" onClick={handleDelete}>
+                <Trash2 className="w-4 h-4 mr-2" /> Delete event
+              </Button>
+            )}
           </div>
         </TabsContent>
       </Tabs>

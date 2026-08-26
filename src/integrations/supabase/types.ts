@@ -49,6 +49,38 @@ export type Database = {
           },
         ]
       }
+      event_members: {
+        Row: {
+          id: string
+          event_id: string
+          user_id: string
+          invited_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          user_id: string
+          invited_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          user_id?: string
+          invited_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_members_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           background_image_url: string | null
@@ -270,9 +302,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      invite_member_to_event: {
+        Args: { p_event_id: string; p_email: string }
+        Returns: Json
+      }
+      is_event_member: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: boolean
+      }
       register_for_event: {
         Args: { p_data: Json; p_event_id: string }
         Returns: string
+      }
+      remove_event_member: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

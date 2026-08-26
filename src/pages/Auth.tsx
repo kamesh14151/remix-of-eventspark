@@ -143,7 +143,7 @@ const Auth = () => {
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: "google",
                     options: {
-                      redirectTo: window.location.origin,
+                      redirectTo: `${window.location.origin}/dashboard/events`,
                     },
                   });
                   if (error) toast.error(error.message || "Google sign-in failed");
@@ -213,7 +213,7 @@ const Auth = () => {
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: "google",
                     options: {
-                      redirectTo: window.location.origin,
+                      redirectTo: `${window.location.origin}/dashboard/events`,
                     },
                   });
                   if (error) toast.error(error.message || "Google sign-in failed");
