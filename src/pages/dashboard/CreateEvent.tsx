@@ -245,6 +245,7 @@ const CreateEvent = () => {
         capacity: capacity ? parseInt(capacity) : undefined,
         background_image_url: flyerUrl || undefined,
         color_mode: colorMode,
+        status: "live",
       } as any;
 
       if (isEditMode && editId) {

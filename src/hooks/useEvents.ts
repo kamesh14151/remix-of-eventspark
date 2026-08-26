@@ -83,13 +83,14 @@ export function useCreateEvent() {
       ticket_price?: number;
       requires_approval?: boolean;
       capacity?: number;
+      status?: string;
     }) => {
       const slug = generateSlug(input.name);
       const { data, error } = await supabase.from("events").insert({
         ...input,
         slug,
         user_id: user!.id,
-        status: "draft",
+        status: input.status || "live",
       } as any).select().single();
       if (error) throw error;
       return data as Event;
