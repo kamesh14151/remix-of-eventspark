@@ -122,6 +122,9 @@ const RegistrationForm = ({
   isPending,
   brandColor,
   className = "",
+  teamMembers,
+  onTeamMembersChange,
+  maxTeamSize,
 }: {
   formFields: FormField[] | undefined;
   formData: Record<string, string>;
