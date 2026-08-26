@@ -40,11 +40,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         <p style="font-size: 14px; color: #6B7280; margin: 0 0 16px 0;">
           Powered by <strong>EventSpark</strong>
         </p>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="24" height="24" style="border-radius: 4px;" />
-          <p style="font-size: 14px; color: #9CA3AF; margin: 0;">
-            Developed by <strong>AJ STUDIOZ</strong>
-          </p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <p style="font-size: 14px; color: #9CA3AF; margin: 0;">Developed by</p>
+          <img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="20" height="20" style="border-radius: 4px;" />
+          <p style="font-size: 14px; color: #9CA3AF; margin: 0;"><strong>AJ STUDIOZ</strong></p>
         </div>
         <p style="font-size: 12px; color: #9CA3AF; margin: 12px 0 0 0;">
           © ${new Date().getFullYear()} EventSpark. All rights reserved.
