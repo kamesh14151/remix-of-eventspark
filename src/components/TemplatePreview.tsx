@@ -105,7 +105,8 @@ const TemplatePreview = (props: TemplatePreviewProps) => {
           </div>
           <div className="relative z-10 flex-1 px-4 pb-2 mt-auto">
             <div className="bg-background rounded-md p-2 shadow-sm border border-border/50">
-            <FormFieldsMock />
+              <FormFieldsMock />
+            </div>
           </div>
         </div>
       )}
