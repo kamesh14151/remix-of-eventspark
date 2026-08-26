@@ -41,6 +41,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!lastSent || now - parseInt(lastSent) > 300000) {
               sessionStorage.setItem(sentKey, now.toString());
 
+              // Ensure this is a TRULY fresh login (within the last 2 minutes)
+              // This prevents sending emails on page refresh or background token renewals
+              const lastSignInAt = session.user.last_sign_in_at ? new Date(session.user.last_sign_in_at).getTime() : 0;
+              if (Date.now() - lastSignInAt > 120000) {
+                console.log("Skipping login email: not a fresh sign-in event.");
+                return;
+              }
+
               const name = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "there";
               
               // Determine if this is a brand new user (created within the last 2 minutes)
