@@ -318,6 +318,8 @@ const Register = () => {
               email: email,
               name: name || "Attendee",
               eventTitle: event.name,
+              eventDate: formatEventDateTime(event),
+              eventLocation: event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual",
               hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
               amount: finalData.razorpay_payment_id ? event.ticket_price ? Number(event.ticket_price) * 100 : 0 : undefined,
               paymentId: finalData.razorpay_payment_id,
