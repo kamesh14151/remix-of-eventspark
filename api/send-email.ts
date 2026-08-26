@@ -38,17 +38,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const logoUrl = "https://events.ajstudioz.co.in/favicon.png"; 
     const ajLogoUrl = "https://events.ajstudioz.co.in/aj-logo.png";
     const creditsHtml = `
-      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB; text-align: center;">
-        <div style="margin-bottom: 16px;">
-          <span style="font-size: 14px; color: #6B7280; vertical-align: middle;">Powered by</span>
-          <img src="${logoUrl}" alt="EventSpark Logo" width="28" height="28" style="vertical-align: middle; margin: 0 8px; border-radius: 6px;" />
-          <strong style="font-size: 14px; color: #6B7280; vertical-align: middle;">EventSpark</strong>
-        </div>
-        <div>
-          <span style="font-size: 14px; color: #9CA3AF; vertical-align: middle;">Developed by</span>
-          <img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="28" height="28" style="vertical-align: middle; margin: 0 8px; border-radius: 6px;" />
-          <strong style="font-size: 14px; color: #9CA3AF; vertical-align: middle;">AJ STUDIOZ</strong>
-        </div>
+      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: center;">
+          <tr>
+            <td align="center" style="padding-bottom: 16px;">
+              <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="font-size: 14px; color: #6B7280; padding-right: 8px;">Powered by</td>
+                  <td><img src="${logoUrl}" alt="EventSpark Logo" width="32" height="32" style="border-radius: 6px; display: block;" /></td>
+                  <td style="font-size: 14px; color: #6B7280; font-weight: bold; padding-left: 8px;">EventSpark</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="font-size: 14px; color: #9CA3AF; padding-right: 8px;">Developed by</td>
+                  <td><img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="32" height="32" style="border-radius: 6px; display: block;" /></td>
+                  <td style="font-size: 14px; color: #9CA3AF; font-weight: bold; padding-left: 8px;">AJ STUDIOZ</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       </div>
     `;
 
@@ -180,7 +194,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Header: Logo and host
         try {
-          const logoRes = await fetch(logoUrl);
+          const topLogo = flyerUrl || logoUrl;
+          const logoRes = await fetch(topLogo);
           const logoArrayBuffer = await logoRes.arrayBuffer();
           const bytes = new Uint8Array(logoArrayBuffer);
           let image = bytes[0] === 0xFF && bytes[1] === 0xD8 ? await pdfDoc.embedJpg(logoArrayBuffer) : await pdfDoc.embedPng(logoArrayBuffer);
