@@ -235,7 +235,9 @@ const Register = () => {
               type: "registration",
               email: email,
               name: name || "Attendee",
-              eventTitle: event.name
+              eventTitle: event.name,
+              amount: finalData.razorpay_payment_id ? event.ticket_price ? Number(event.ticket_price) * 100 : 0 : undefined,
+              paymentId: finalData.razorpay_payment_id
             })
           }).catch(e => console.error("Failed to send registration email:", e));
         } else {

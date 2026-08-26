@@ -28,6 +28,7 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
     location_type: event.location_type || "virtual",
     location_value: event.location_value || "",
     ticket_price: event.ticket_price ? String(event.ticket_price) : "",
+    capacity: event.capacity ? String(event.capacity) : "",
   });
 
   // Track if changes are made to show the Save button
@@ -45,6 +46,7 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
       location_type: event.location_type || "virtual",
       location_value: event.location_value || "",
       ticket_price: event.ticket_price ? String(event.ticket_price) : "",
+      capacity: event.capacity ? String(event.capacity) : "",
     });
     setHasChanges(false);
   }, [event]);
@@ -71,6 +73,7 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
         location_type: formData.location_type,
         location_value: formData.location_value || null,
         ticket_price: formData.ticket_price ? parseFloat(formData.ticket_price) : 0,
+        capacity: formData.capacity ? parseInt(formData.capacity) : null,
       });
       setHasChanges(false);
       toast.success("Event details saved successfully");
@@ -258,6 +261,33 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
                 placeholder="0.00"
                 value={formData.ticket_price}
                 onChange={(e) => handleChange("ticket_price", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-1.5 sm:col-span-2 mb-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                  Capacity
+                </Label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    id="unlimited-capacity" 
+                    checked={formData.capacity === ""}
+                    onChange={(e) => handleChange("capacity", e.target.checked ? "" : "100")}
+                    className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
+                  />
+                  <Label htmlFor="unlimited-capacity" className="text-xs font-medium text-muted-foreground cursor-pointer">Unlimited</Label>
+                </div>
+              </div>
+              <Input
+                type="number"
+                min="1"
+                className="h-10 text-sm rounded-lg"
+                placeholder="Enter capacity or check unlimited"
+                value={formData.capacity}
+                onChange={(e) => handleChange("capacity", e.target.value)}
+                disabled={formData.capacity === ""}
               />
             </div>
           </div>
