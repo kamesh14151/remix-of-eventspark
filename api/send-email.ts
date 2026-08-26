@@ -24,7 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { type, email, name, loginTime, browser, eventTitle } = req.body;
+    const { type, email, name, loginTime, browser, eventTitle, hostName } = req.body;
+    const targetHostName = hostName || "EventSpark";
 
     if (!email || !type) {
       return res.status(400).json({ error: "Missing email or type" });
@@ -50,6 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </p>
       </div>
     `;
+
+    let attachments = [];
 
     if (type === "signup") {
       subject = "Welcome to EventSpark!";
@@ -122,9 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </body>
         </html>
       `;
-    let attachments = [];
-
-    if (type === "registration") {
+    } else if (type === "registration") {
       subject = `You're registered for ${eventTitle || "the event"}!`;
       htmlContent = `
         <!DOCTYPE html>
@@ -142,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               </div>
               <div style="margin-bottom: 32px;">
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0 0 16px;">
-                  Thank you for registering for <strong>${eventTitle || "our event"}</strong>. We're excited to have you!
+                  Thank you for registering for <strong>${eventTitle || "our event"}</strong> hosted by <strong>${targetHostName}</strong>. We're excited to have you!
                 </p>
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0;">
                   You will receive more updates from the host soon.
@@ -192,6 +193,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         doc.font("Helvetica-Bold").text("Event Details:");
         doc.font("Helvetica").text(`Event: ${eventTitle}`);
+        doc.font("Helvetica").text(`Hosted By: ${targetHostName}`);
         doc.moveDown();
         
         doc.font("Helvetica-Bold").text("Payment Info:");
