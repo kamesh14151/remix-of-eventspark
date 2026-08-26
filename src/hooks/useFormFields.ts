@@ -13,7 +13,9 @@ export function useFormFields(eventId: string | undefined) {
         .select("*")
         .eq("event_id", eventId!)
         .order("position");
-      if (error) throw error;
+      // Return empty array on error (e.g. RLS) instead of throwing —
+      // this prevents the Register page from hanging on the loading spinner.
+      if (error) return [] as FormField[];
       return data as FormField[];
     },
     enabled: !!eventId,
