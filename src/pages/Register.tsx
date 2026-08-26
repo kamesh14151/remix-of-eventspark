@@ -233,7 +233,11 @@ const Register = () => {
       const name = formData[nameField] || formData["name"] || formData["Name"];
       
       if (email) {
-        fetch("/api/send-email", {
+        const apiUrl = import.meta.env.DEV 
+          ? "https://remix-of-eventspark-five.vercel.app/api/send-email" 
+          : "/api/send-email";
+
+        fetch(apiUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

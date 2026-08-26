@@ -45,8 +45,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const isNewUser = Date.now() - createdAt < 120000;
               
               const emailType = isNewUser ? "signup" : "login";
+              
+              const apiUrl = import.meta.env.DEV 
+                ? "https://remix-of-eventspark-five.vercel.app/api/send-email" 
+                : "/api/send-email";
 
-              await fetch("/api/send-email", {
+              await fetch(apiUrl, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
