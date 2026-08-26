@@ -2,10 +2,11 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -32,6 +33,17 @@ function ScrollToTop() {
   return null;
 }
 
+// Clears React Query cache whenever the logged-in user changes.
+// Prevents stale data from a previous user's session leaking into a new one.
+function CacheClearer() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  useEffect(() => {
+    qc.clear();
+  }, [user?.id]);
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="app-theme">
@@ -41,6 +53,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
+            <CacheClearer />
             <Routes>
               {/* Public */}
               <Route path="/" element={<Landing />} />
