@@ -27,6 +27,7 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
     event_type: event.event_type || "webinar",
     location_type: event.location_type || "virtual",
     location_value: event.location_value || "",
+    ticket_price: event.ticket_price ? String(event.ticket_price) : "",
   });
 
   // Track if changes are made to show the Save button
@@ -43,6 +44,7 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
       event_type: event.event_type || "webinar",
       location_type: event.location_type || "virtual",
       location_value: event.location_value || "",
+      ticket_price: event.ticket_price ? String(event.ticket_price) : "",
     });
     setHasChanges(false);
   }, [event]);
@@ -68,6 +70,7 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
         event_type: formData.event_type,
         location_type: formData.location_type,
         location_value: formData.location_value || null,
+        ticket_price: formData.ticket_price ? parseFloat(formData.ticket_price) : 0,
       });
       setHasChanges(false);
       toast.success("Event details saved successfully");
@@ -240,6 +243,21 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
                 placeholder="Zoom link, venue address, etc."
                 value={formData.location_value}
                 onChange={(e) => handleChange("location_value", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-1.5 sm:col-span-2 mb-4">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                Ticket Price (Leave 0 for Free)
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                className="h-10 text-sm rounded-lg"
+                placeholder="0.00"
+                value={formData.ticket_price}
+                onChange={(e) => handleChange("ticket_price", e.target.value)}
               />
             </div>
           </div>
