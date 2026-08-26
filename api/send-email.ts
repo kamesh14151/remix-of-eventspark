@@ -38,17 +38,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ajLogoUrl = "https://events.ajstudioz.co.in/aj-logo.png";
     const creditsHtml = `
       <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB; text-align: center;">
-        <p style="font-size: 14px; color: #6B7280; margin: 0 0 16px 0;">
-          Powered by <strong>EventSpark</strong>
-        </p>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+          <p style="font-size: 14px; color: #6B7280; margin: 0;">Powered by</p>
+          <img src="${logoUrl}" alt="EventSpark Logo" width="16" height="16" style="border-radius: 4px;" />
+          <p style="font-size: 14px; color: #6B7280; margin: 0;"><strong>EventSpark</strong></p>
+        </div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
           <p style="font-size: 14px; color: #9CA3AF; margin: 0;">Developed by</p>
-          <img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="20" height="20" style="border-radius: 4px;" />
+          <img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="16" height="16" style="border-radius: 4px;" />
           <p style="font-size: 14px; color: #9CA3AF; margin: 0;"><strong>AJ STUDIOZ</strong></p>
         </div>
-        <p style="font-size: 12px; color: #9CA3AF; margin: 12px 0 0 0;">
-          © ${new Date().getFullYear()} EventSpark. All rights reserved.
-        </p>
       </div>
     `;
 
@@ -127,13 +126,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `;
     } else if (type === "registration") {
       subject = `You're registered for ${eventTitle || "the event"}!`;
+      const { flyerUrl } = req.body;
+      const topLogo = flyerUrl || logoUrl;
       htmlContent = `
         <!DOCTYPE html>
         <html lang="en" dir="ltr">
           <body style="background-color: #ffffff; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px 40px;">
               <div style="text-align: center; margin-bottom: 32px;">
-                <img src="${logoUrl}" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
+                <img src="${topLogo}" alt="Event Logo" width="80" height="80" style="display: block; margin: 0 auto 16px auto; border-radius: 12px; object-fit: cover;" />
                 <h1 style="font-size: 28px; font-weight: bold; color: #020304; margin: 0 0 16px;">
                   Registration Confirmed!
                 </h1>
@@ -166,86 +167,97 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const isPaid = amount && Number(amount) > 0;
       
       try {
-        const PDFDocument = require("pdfkit");
-        const doc = new PDFDocument({ margin: 50 });
-        const buffers: Buffer[] = [];
+        const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
+        const pdfDoc = await PDFDocument.create();
+        const page = pdfDoc.addPage([595, 842]);
         
-        const pdfPromise = new Promise<string>((resolve, reject) => {
-          doc.on("data", buffers.push.bind(buffers));
-          doc.on("end", () => resolve(Buffer.concat(buffers).toString("base64")));
-          doc.on("error", reject);
-        });
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        
+        let currentY = 842 - 50;
+        
+        const sanitize = (str: string) => (str || "").replace(/[^\\x20-\\x7E]/g, "");
 
-        // Try to fetch logo
         try {
           const logoRes = await fetch(logoUrl);
           const logoArrayBuffer = await logoRes.arrayBuffer();
-          doc.image(Buffer.from(logoArrayBuffer), 50, 45, { width: 40 });
-          doc.moveDown(3);
+          const bytes = new Uint8Array(logoArrayBuffer);
+          let image;
+          if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
+            image = await pdfDoc.embedJpg(logoArrayBuffer);
+          } else {
+            image = await pdfDoc.embedPng(logoArrayBuffer);
+          }
+          page.drawImage(image, { x: 50, y: currentY - 40, width: 40, height: 40 });
+          currentY -= 60;
         } catch (e) {
           console.error("Failed to load logo for PDF", e);
+          currentY -= 20;
         }
 
-        doc.fontSize(24).font("Helvetica-Bold").text("Registration Receipt");
-        doc.moveDown();
-        doc.fontSize(12).font("Helvetica").text(`Receipt ID: ${isPaid ? paymentId : "FREE-" + Math.floor(Math.random() * 1000000)}`);
-        doc.text(`Date: ${new Date().toLocaleDateString()}`);
-        doc.moveDown();
+        page.drawText("Registration Receipt", { x: 50, y: currentY, size: 24, font: boldFont });
+        currentY -= 30;
         
-        doc.font("Helvetica-Bold").text("Billed To:");
-        doc.font("Helvetica").text(targetName);
-        doc.text(email);
-        doc.moveDown();
+        page.drawText(\`Receipt ID: \${isPaid ? paymentId : "FREE-" + Math.floor(Math.random() * 1000000)}\`, { x: 50, y: currentY, size: 12, font });
+        currentY -= 15;
+        page.drawText(\`Date: \${new Date().toLocaleDateString()}\`, { x: 50, y: currentY, size: 12, font });
+        currentY -= 30;
         
-        doc.font("Helvetica-Bold").text("Event Details:");
-        doc.font("Helvetica").text(`Event: ${eventTitle}`);
-        doc.font("Helvetica").text(`Hosted By: ${targetHostName}`);
-        doc.moveDown();
+        page.drawText("Billed To:", { x: 50, y: currentY, size: 12, font: boldFont });
+        currentY -= 15;
+        page.drawText(sanitize(targetName), { x: 50, y: currentY, size: 12, font });
+        currentY -= 15;
+        page.drawText(sanitize(email), { x: 50, y: currentY, size: 12, font });
+        currentY -= 30;
         
-        doc.font("Helvetica-Bold").text("Payment Info:");
-        doc.font("Helvetica").text(`Amount Paid: ${isPaid ? 'Rs. ' + (Number(amount) / 100) : 'Free'}`);
-        doc.moveDown(2);
+        page.drawText("Event Details:", { x: 50, y: currentY, size: 12, font: boldFont });
+        currentY -= 15;
+        page.drawText(\`Event: \${sanitize(eventTitle)}\`, { x: 50, y: currentY, size: 12, font });
+        currentY -= 15;
+        page.drawText(\`Hosted By: \${sanitize(targetHostName)}\`, { x: 50, y: currentY, size: 12, font });
+        currentY -= 30;
+        
+        page.drawText("Payment Info:", { x: 50, y: currentY, size: 12, font: boldFont });
+        currentY -= 15;
+        page.drawText(\`Amount Paid: \${isPaid ? 'Rs. ' + (Number(amount) / 100) : 'Free'}\`, { x: 50, y: currentY, size: 12, font });
+        currentY -= 30;
         
         if (teamMembers && teamMembers.length > 0) {
-          doc.font("Helvetica-Bold").text("Team Members:");
-          doc.moveDown(0.5);
+          page.drawText("Team Members:", { x: 50, y: currentY, size: 12, font: boldFont });
+          currentY -= 20;
           
-          // Draw table header
-          doc.font("Helvetica-Bold").fontSize(10);
-          const startY = doc.y;
-          doc.text("Member", 50, startY);
-          doc.text("Name", 120, startY);
-          doc.text("Email", 300, startY);
+          page.drawText("Member", { x: 50, y: currentY, size: 10, font: boldFont });
+          page.drawText("Name", { x: 120, y: currentY, size: 10, font: boldFont });
+          page.drawText("Email", { x: 300, y: currentY, size: 10, font: boldFont });
+          currentY -= 10;
           
-          doc.moveTo(50, startY + 15).lineTo(500, startY + 15).stroke();
+          page.drawLine({ start: { x: 50, y: currentY }, end: { x: 500, y: currentY }, thickness: 1 });
+          currentY -= 15;
           
-          // Draw Team Leader
-          let currentY = startY + 25;
-          doc.font("Helvetica").fontSize(10);
-          doc.text("Leader", 50, currentY);
-          doc.text(targetName, 120, currentY);
-          doc.text(email, 300, currentY);
-          currentY += 20;
+          page.drawText("Leader", { x: 50, y: currentY, size: 10, font });
+          page.drawText(sanitize(targetName), { x: 120, y: currentY, size: 10, font });
+          page.drawText(sanitize(email), { x: 300, y: currentY, size: 10, font });
+          currentY -= 20;
           
-          // Draw other members
           teamMembers.forEach((member: any, i: number) => {
-            doc.text(`Member ${i + 2}`, 50, currentY);
-            doc.text(member.name || "N/A", 120, currentY);
-            doc.text(member.email || "N/A", 300, currentY);
-            currentY += 20;
+            page.drawText(\`Member \${i + 2}\`, { x: 50, y: currentY, size: 10, font });
+            page.drawText(sanitize(member.name || "N/A"), { x: 120, y: currentY, size: 10, font });
+            page.drawText(sanitize(member.email || "N/A"), { x: 300, y: currentY, size: 10, font });
+            currentY -= 20;
           });
-          
-          doc.y = currentY + 20;
+          currentY -= 10;
         }
         
-        doc.fontSize(10).fillColor("gray").text("Thank you for your registration!", 50, doc.y, { align: "center", width: 500 });
-        doc.text("Powered by EventSpark", { align: "center" });
+        const gray = rgb(0.5, 0.5, 0.5);
+        page.drawText("Thank you for your registration!", { x: 50, y: currentY, size: 10, font, color: gray });
+        currentY -= 15;
+        page.drawText("Powered by EventSpark", { x: 50, y: currentY, size: 10, font, color: gray });
         
-        doc.end();
-
-        const pdfBase64 = await pdfPromise;
+        const pdfBytes = await pdfDoc.save();
+        const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
+        
         attachments.push({
-          filename: `Receipt_${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+          filename: \`Receipt_\${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf\`,
           content: pdfBase64,
         });
       } catch (pdfErr) {

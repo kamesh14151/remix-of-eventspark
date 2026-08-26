@@ -316,7 +316,8 @@ const Register = () => {
               hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
               amount: finalData.razorpay_payment_id ? event.ticket_price ? Number(event.ticket_price) * 100 : 0 : undefined,
               paymentId: finalData.razorpay_payment_id,
-              teamMembers: teamMembers.length > 0 ? teamMembers : undefined
+              teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
+              flyerUrl: event.background_image_url
             })
           }).catch(e => console.error("Failed to send registration email:", e));
         } else {
