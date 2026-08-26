@@ -296,10 +296,15 @@ const Register = () => {
       
       // Fire and forget email notification
       const emailField = formFields?.find(f => f.field_type === "email")?.label || "Email";
-      const nameField = formFields?.find(f => f.label.toLowerCase().includes("name"))?.label || "Name";
+      const nameField = formFields?.find(f => f.label.toLowerCase().includes("name") || f.label.toLowerCase().includes("first"))?.label || "Name";
       
-      const email = finalData[emailField] || finalData["email"] || finalData["Email"] || Object.values(finalData).find((v: any) => typeof v === 'string' && v.includes("@"));
-      const name = finalData[nameField] || finalData["name"] || finalData["Name"];
+      const email = (finalData[emailField] || finalData["email"] || finalData["Email"] || Object.values(finalData).find((v: any) => typeof v === 'string' && v.includes("@")) || "").toString().trim();
+      let name = (finalData[nameField] || finalData["name"] || finalData["Name"] || finalData["Full Name"] || "").toString().trim();
+      if (!name) {
+        const potentialName = Object.values(finalData).find((v: any) => typeof v === 'string' && v.length > 2 && !v.includes('@') && !/^\\d+$/.test(v));
+        if (potentialName) name = potentialName as string;
+      }
+      if (!name || name.trim() === "") name = "Attendee";
       
       if (email) {
         if (!import.meta.env.DEV) {
