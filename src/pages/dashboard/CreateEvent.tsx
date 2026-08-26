@@ -613,8 +613,47 @@ const CreateEvent = () => {
                   </div>
                   {isPaid && (
                     <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">Ticket Price ($)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} />
+                      <Label className="text-sm text-muted-foreground">Ticket Price (₹)</Label>
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {["0", "100", "500", "1000"].map((price) => (
+                            <Button
+                              key={price}
+                              type="button"
+                              variant={ticketPrice === price ? "default" : "outline"}
+                              size="sm"
+                              className={ticketPrice === price ? "bg-primary" : ""}
+                              onClick={() => setTicketPrice(price)}
+                            >
+                              {price === "0" ? "Free" : `₹${price}`}
+                            </Button>
+                          ))}
+                          <Button
+                            type="button"
+                            variant={!["0", "100", "500", "1000"].includes(ticketPrice) && ticketPrice !== "" ? "default" : "outline"}
+                            size="sm"
+                            className={!["0", "100", "500", "1000"].includes(ticketPrice) && ticketPrice !== "" ? "bg-primary" : ""}
+                            onClick={() => {
+                              if (["0", "100", "500", "1000"].includes(ticketPrice)) {
+                                setTicketPrice("");
+                              }
+                            }}
+                          >
+                            Custom
+                          </Button>
+                        </div>
+                        {!["0", "100", "500", "1000"].includes(ticketPrice) && (
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="h-10 text-sm rounded-lg mt-2"
+                            placeholder="Enter custom amount (e.g. 250)"
+                            value={ticketPrice}
+                            onChange={(e) => setTicketPrice(e.target.value)}
+                          />
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -627,8 +666,27 @@ const CreateEvent = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Capacity</Label>
-                    <Input type="number" min="1" placeholder="Leave empty for unlimited" value={capacity} onChange={e => setCapacity(e.target.value)} />
+                    <div className="flex items-center justify-between">
+                      <Label>Capacity</Label>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          id="unlimited-capacity-create" 
+                          checked={capacity === ""}
+                          onChange={(e) => setCapacity(e.target.checked ? "" : "100")}
+                          className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
+                        />
+                        <Label htmlFor="unlimited-capacity-create" className="text-xs font-medium text-muted-foreground cursor-pointer">Unlimited</Label>
+                      </div>
+                    </div>
+                    <Input 
+                      type="number" 
+                      min="1" 
+                      placeholder="Enter capacity or check unlimited" 
+                      value={capacity} 
+                      onChange={e => setCapacity(e.target.value)} 
+                      disabled={capacity === ""}
+                    />
                   </div>
                 </CardContent>
               </Card>

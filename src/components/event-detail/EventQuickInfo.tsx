@@ -251,17 +251,48 @@ export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
             
             <div className="space-y-1.5 sm:col-span-2 mb-4">
               <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
-                Ticket Price (Leave 0 for Free)
+                Ticket Price (₹)
               </Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                className="h-10 text-sm rounded-lg"
-                placeholder="0.00"
-                value={formData.ticket_price}
-                onChange={(e) => handleChange("ticket_price", e.target.value)}
-              />
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {["0", "100", "500", "1000"].map((price) => (
+                    <Button
+                      key={price}
+                      type="button"
+                      variant={formData.ticket_price === price ? "default" : "outline"}
+                      size="sm"
+                      className={formData.ticket_price === price ? "bg-primary" : ""}
+                      onClick={() => handleChange("ticket_price", price)}
+                    >
+                      {price === "0" ? "Free" : `₹${price}`}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant={!["0", "100", "500", "1000"].includes(formData.ticket_price) && formData.ticket_price !== "" ? "default" : "outline"}
+                    size="sm"
+                    className={!["0", "100", "500", "1000"].includes(formData.ticket_price) && formData.ticket_price !== "" ? "bg-primary" : ""}
+                    onClick={() => {
+                      if (["0", "100", "500", "1000"].includes(formData.ticket_price)) {
+                        handleChange("ticket_price", "");
+                      }
+                    }}
+                  >
+                    Custom
+                  </Button>
+                </div>
+                {!["0", "100", "500", "1000"].includes(formData.ticket_price) && (
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className="h-10 text-sm rounded-lg mt-2"
+                    placeholder="Enter custom amount (e.g. 250)"
+                    value={formData.ticket_price}
+                    onChange={(e) => handleChange("ticket_price", e.target.value)}
+                  />
+                )}
+              </div>
             </div>
             
             <div className="space-y-1.5 sm:col-span-2 mb-4">

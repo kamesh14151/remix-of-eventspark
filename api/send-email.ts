@@ -154,62 +154,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </html>
       `;
 
-      // If this was a paid registration, generate a PDF receipt
+      // Always generate a PDF receipt, even for free events
       const { amount, paymentId } = req.body;
-      if (amount && Number(amount) > 0) {
+      const isPaid = amount && Number(amount) > 0;
+      
+      try {
+        const PDFDocument = require("pdfkit");
+        const doc = new PDFDocument({ margin: 50 });
+        const buffers: Buffer[] = [];
+        
+        const pdfPromise = new Promise<string>((resolve, reject) => {
+          doc.on("data", buffers.push.bind(buffers));
+          doc.on("end", () => resolve(Buffer.concat(buffers).toString("base64")));
+          doc.on("error", reject);
+        });
+
+        // Try to fetch logo
         try {
-          const PDFDocument = require("pdfkit");
-          const doc = new PDFDocument({ margin: 50 });
-          const buffers: Buffer[] = [];
-          
-          const pdfPromise = new Promise<string>((resolve, reject) => {
-            doc.on("data", buffers.push.bind(buffers));
-            doc.on("end", () => resolve(Buffer.concat(buffers).toString("base64")));
-            doc.on("error", reject);
-          });
-
-          // Try to fetch logo
-          try {
-            const logoRes = await fetch(logoUrl);
-            const logoArrayBuffer = await logoRes.arrayBuffer();
-            doc.image(Buffer.from(logoArrayBuffer), 50, 45, { width: 40 });
-            doc.moveDown(3);
-          } catch (e) {
-            console.error("Failed to load logo for PDF", e);
-          }
-
-          doc.fontSize(24).font("Helvetica-Bold").text("Payment Receipt");
-          doc.moveDown();
-          doc.fontSize(12).font("Helvetica").text(`Receipt ID: ${paymentId || "N/A"}`);
-          doc.text(`Date: ${new Date().toLocaleDateString()}`);
-          doc.moveDown();
-          
-          doc.font("Helvetica-Bold").text("Billed To:");
-          doc.font("Helvetica").text(targetName);
-          doc.text(email);
-          doc.moveDown();
-          
-          doc.font("Helvetica-Bold").text("Event Details:");
-          doc.font("Helvetica").text(`Event: ${eventTitle}`);
-          doc.moveDown();
-          
-          doc.font("Helvetica-Bold").text("Payment Info:");
-          doc.font("Helvetica").text(`Amount Paid: Rs. ${Number(amount) / 100}`);
-          doc.moveDown(2);
-          
-          doc.fontSize(10).fillColor("gray").text("Thank you for your registration!", { align: "center" });
-          doc.text("Powered by EventSpark", { align: "center" });
-          
-          doc.end();
-
-          const pdfBase64 = await pdfPromise;
-          attachments.push({
-            filename: `Receipt_${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
-            content: pdfBase64,
-          });
-        } catch (pdfErr) {
-          console.error("Failed to generate PDF receipt:", pdfErr);
+          const logoRes = await fetch(logoUrl);
+          const logoArrayBuffer = await logoRes.arrayBuffer();
+          doc.image(Buffer.from(logoArrayBuffer), 50, 45, { width: 40 });
+          doc.moveDown(3);
+        } catch (e) {
+          console.error("Failed to load logo for PDF", e);
         }
+
+        doc.fontSize(24).font("Helvetica-Bold").text("Registration Receipt");
+        doc.moveDown();
+        doc.fontSize(12).font("Helvetica").text(`Receipt ID: ${isPaid ? paymentId : "FREE-" + Math.floor(Math.random() * 1000000)}`);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`);
+        doc.moveDown();
+        
+        doc.font("Helvetica-Bold").text("Billed To:");
+        doc.font("Helvetica").text(targetName);
+        doc.text(email);
+        doc.moveDown();
+        
+        doc.font("Helvetica-Bold").text("Event Details:");
+        doc.font("Helvetica").text(`Event: ${eventTitle}`);
+        doc.moveDown();
+        
+        doc.font("Helvetica-Bold").text("Payment Info:");
+        doc.font("Helvetica").text(`Amount Paid: ${isPaid ? 'Rs. ' + (Number(amount) / 100) : 'Free'}`);
+        doc.moveDown(2);
+        
+        doc.fontSize(10).fillColor("gray").text("Thank you for your registration!", { align: "center" });
+        doc.text("Powered by EventSpark", { align: "center" });
+        
+        doc.end();
+
+        const pdfBase64 = await pdfPromise;
+        attachments.push({
+          filename: `Receipt_${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+          content: pdfBase64,
+        });
+      } catch (pdfErr) {
+        console.error("Failed to generate PDF receipt:", pdfErr);
       }
     }
 
