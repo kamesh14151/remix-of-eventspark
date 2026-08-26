@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2 } from "lucide-react";
 import { useEventBySlug, Event } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
@@ -14,6 +14,8 @@ import { motion } from "framer-motion";
 import { Tables } from "@/integrations/supabase/types";
 
 type FormField = Tables<"form_fields">;
+
+export type TeamMember = { name: string; email: string };
 
 // ─── Helper: format event date/time with timezone ───
 function formatEventDateTime(event: Event) {
@@ -130,8 +132,32 @@ const RegistrationForm = ({
   isPending: boolean;
   brandColor: string;
   className?: string;
-}) => (
-  <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
+  teamMembers?: TeamMember[];
+  onTeamMembersChange?: (members: TeamMember[]) => void;
+  maxTeamSize?: number;
+}) => {
+  const addTeamMember = () => {
+    if (onTeamMembersChange && teamMembers && maxTeamSize && teamMembers.length < maxTeamSize - 1) {
+      onTeamMembersChange([...teamMembers, { name: "", email: "" }]);
+    }
+  };
+
+  const removeTeamMember = (index: number) => {
+    if (onTeamMembersChange && teamMembers) {
+      onTeamMembersChange(teamMembers.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateTeamMember = (index: number, field: keyof TeamMember, value: string) => {
+    if (onTeamMembersChange && teamMembers) {
+      const updated = [...teamMembers];
+      updated[index] = { ...updated[index], [field]: value };
+      onTeamMembersChange(updated);
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
     {formFields?.map((field) => (
       <div key={field.id} className="space-y-2">
         <Label>{field.label}{field.required && " *"}</Label>
@@ -144,6 +170,43 @@ const RegistrationForm = ({
         />
       </div>
     ))}
+    {maxTeamSize && maxTeamSize > 1 && teamMembers && onTeamMembersChange && (
+      <div className="pt-4 mt-4 border-t border-border">
+        <h3 className="font-semibold text-lg mb-4">Team Members</h3>
+        {teamMembers.length > 0 ? (
+          <div className="space-y-4 mb-4">
+            {teamMembers.map((member, idx) => (
+              <div key={idx} className="p-4 bg-muted/50 rounded-lg relative space-y-3 border border-border">
+                <div className="absolute top-3 right-3">
+                  <button type="button" onClick={() => removeTeamMember(idx)} className="text-muted-foreground hover:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="pr-6 space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Member {idx + 2} Name</Label>
+                    <Input required value={member.name} onChange={e => updateTeamMember(idx, "name", e.target.value)} placeholder="Full Name" className="h-9 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Member {idx + 2} Email</Label>
+                    <Input required type="email" value={member.email} onChange={e => updateTeamMember(idx, "email", e.target.value)} placeholder="Email Address" className="h-9 text-sm" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground mb-4">Registering as a team? Add your team members below.</p>
+        )}
+        
+        {teamMembers.length < maxTeamSize - 1 && (
+          <Button type="button" variant="outline" onClick={addTeamMember} className="w-full text-sm border-dashed">
+            <Plus className="w-4 h-4 mr-2" /> Add Team Member
+          </Button>
+        )}
+      </div>
+    )}
+
     <div className="flex items-start gap-2 pt-2">
       <Checkbox id="gdpr" checked={consent} onCheckedChange={(c) => onConsentChange(!!c)} />
       <Label htmlFor="gdpr" className="text-xs text-muted-foreground leading-relaxed">
@@ -159,7 +222,8 @@ const RegistrationForm = ({
       {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Registering…</> : "Register Now"}
     </Button>
   </form>
-);
+  );
+};
 
 const FlyerImage = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string | null; eventName: string; className?: string }) => (
   flyerUrl ? (
@@ -186,6 +250,7 @@ const Register = () => {
   const [consent, setConsent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   const handleFieldChange = useCallback((label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
@@ -239,7 +304,8 @@ const Register = () => {
               eventTitle: event.name,
               hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
               amount: finalData.razorpay_payment_id ? event.ticket_price ? Number(event.ticket_price) * 100 : 0 : undefined,
-              paymentId: finalData.razorpay_payment_id
+              paymentId: finalData.razorpay_payment_id,
+              teamMembers: teamMembers.length > 0 ? teamMembers : undefined
             })
           }).catch(e => console.error("Failed to send registration email:", e));
         } else {
@@ -267,7 +333,10 @@ const Register = () => {
       return;
     }
 
-    const price = event.ticket_price ? Number(event.ticket_price) : 0;
+    let price = event.ticket_price ? Number(event.ticket_price) : 0;
+    if (price > 0 && event.max_team_size && event.max_team_size > 1 && event.team_pricing === "per_member") {
+      price = price * (1 + teamMembers.length);
+    }
 
     if (price > 0) {
       setIsProcessingPayment(true);
@@ -323,7 +392,8 @@ const Register = () => {
                 await completeRegistration({
                   ...formData,
                   razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id
+                  razorpay_order_id: response.razorpay_order_id,
+                  team_members: teamMembers.length > 0 ? teamMembers : undefined
                 });
               } else {
                 toast.error("Payment verification failed.");
@@ -365,7 +435,7 @@ const Register = () => {
       }
     } else {
       // Free event
-      await completeRegistration(formData);
+      await completeRegistration({ ...formData, team_members: teamMembers.length > 0 ? teamMembers : undefined });
     }
   };
 
@@ -383,6 +453,9 @@ const Register = () => {
     onSubmit: handleSubmit,
     isPending: createReg.isPending || isProcessingPayment,
     brandColor,
+    teamMembers,
+    onTeamMembersChange: setTeamMembers,
+    maxTeamSize: event.max_team_size || 1,
   };
 
   const wrapDark = (content: React.ReactNode) => (

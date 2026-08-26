@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { type, email, name, loginTime, browser, eventTitle, hostName } = req.body;
+    const { type, email, name, loginTime, browser, eventTitle, hostName, teamMembers } = req.body;
     const targetHostName = hostName || "EventSpark";
 
     if (!email || !type) {
@@ -148,6 +148,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0;">
                   You will receive more updates from the host soon.
                 </p>
+                ${teamMembers && teamMembers.length > 0 ? `
+                  <div style="margin-top: 24px; padding: 16px; background-color: #F3F4F6; border-radius: 8px;">
+                    <p style="font-size: 16px; font-weight: bold; color: #374151; margin: 0 0 12px;">Team Registration (${teamMembers.length + 1} members total)</p>
+                    <p style="font-size: 14px; color: #4B5563; margin: 0;">Your team members have been successfully registered. Check the attached receipt for details.</p>
+                  </div>
+                ` : ''}
               </div>
               ${creditsHtml}
             </div>
@@ -200,7 +206,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         doc.font("Helvetica").text(`Amount Paid: ${isPaid ? 'Rs. ' + (Number(amount) / 100) : 'Free'}`);
         doc.moveDown(2);
         
-        doc.fontSize(10).fillColor("gray").text("Thank you for your registration!", { align: "center" });
+        if (teamMembers && teamMembers.length > 0) {
+          doc.font("Helvetica-Bold").text("Team Members:");
+          doc.moveDown(0.5);
+          
+          // Draw table header
+          doc.font("Helvetica-Bold").fontSize(10);
+          const startY = doc.y;
+          doc.text("Member", 50, startY);
+          doc.text("Name", 120, startY);
+          doc.text("Email", 300, startY);
+          
+          doc.moveTo(50, startY + 15).lineTo(500, startY + 15).stroke();
+          
+          // Draw Team Leader
+          let currentY = startY + 25;
+          doc.font("Helvetica").fontSize(10);
+          doc.text("Leader", 50, currentY);
+          doc.text(targetName, 120, currentY);
+          doc.text(email, 300, currentY);
+          currentY += 20;
+          
+          // Draw other members
+          teamMembers.forEach((member: any, i: number) => {
+            doc.text(`Member ${i + 2}`, 50, currentY);
+            doc.text(member.name || "N/A", 120, currentY);
+            doc.text(member.email || "N/A", 300, currentY);
+            currentY += 20;
+          });
+          
+          doc.y = currentY + 20;
+        }
+        
+        doc.fontSize(10).fillColor("gray").text("Thank you for your registration!", 50, doc.y, { align: "center", width: 500 });
         doc.text("Powered by EventSpark", { align: "center" });
         
         doc.end();

@@ -83,6 +83,8 @@ export function useCreateEvent() {
       ticket_price?: number;
       requires_approval?: boolean;
       capacity?: number;
+      max_team_size?: number;
+      team_pricing?: string;
       status?: string;
     }) => {
       const slug = generateSlug(input.name);

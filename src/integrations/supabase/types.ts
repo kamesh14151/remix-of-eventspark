@@ -85,6 +85,8 @@ export type Database = {
         Row: {
           background_image_url: string | null
           capacity: number | null
+          max_team_size: number | null
+          team_pricing: string | null
           color_mode: string | null
           created_at: string
           description: string | null
@@ -111,6 +113,8 @@ export type Database = {
         Insert: {
           background_image_url?: string | null
           capacity?: number | null
+          max_team_size?: number | null
+          team_pricing?: string | null
           color_mode?: string | null
           created_at?: string
           description?: string | null
@@ -137,6 +141,8 @@ export type Database = {
         Update: {
           background_image_url?: string | null
           capacity?: number | null
+          max_team_size?: number | null
+          team_pricing?: string | null
           color_mode?: string | null
           created_at?: string
           description?: string | null

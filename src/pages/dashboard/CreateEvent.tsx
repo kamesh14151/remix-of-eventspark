@@ -96,6 +96,8 @@ const CreateEvent = () => {
   const [ticketPrice, setTicketPrice] = useState("");
   const [requiresApproval, setRequiresApproval] = useState(false);
   const [capacity, setCapacity] = useState("");
+  const [maxTeamSize, setMaxTeamSize] = useState("1");
+  const [teamPricing, setTeamPricing] = useState("per_member");
   const [selectedTemplate, setSelectedTemplate] = useState("split");
   const [fields, setFields] = useState(defaultFields);
   const [enhancing, setEnhancing] = useState(false);
@@ -123,6 +125,8 @@ const CreateEvent = () => {
       setColorMode((existingEvent as any).color_mode === "light" ? "light" : "dark");
       setRequiresApproval(existingEvent.requires_approval || false);
       setCapacity(existingEvent.capacity ? String(existingEvent.capacity) : "");
+      setMaxTeamSize(existingEvent.max_team_size ? String(existingEvent.max_team_size) : "1");
+      setTeamPricing(existingEvent.team_pricing || "per_member");
 
       if (existingEvent.ticket_price && Number(existingEvent.ticket_price) > 0) {
         setIsPaid(true);
@@ -243,6 +247,8 @@ const CreateEvent = () => {
         ticket_price: isPaid && ticketPrice ? parseFloat(ticketPrice) : undefined,
         requires_approval: requiresApproval,
         capacity: capacity ? parseInt(capacity) : undefined,
+        max_team_size: parseInt(maxTeamSize) || 1,
+        team_pricing: teamPricing,
         background_image_url: flyerUrl || undefined,
         color_mode: colorMode,
         status: "live",
@@ -688,6 +694,43 @@ const CreateEvent = () => {
                       onChange={e => setCapacity(e.target.value)} 
                       disabled={capacity === ""}
                     />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border">
+                <CardContent className="p-6 space-y-6">
+                  <div>
+                    <h3 className="font-medium text-sm mb-1 text-foreground">Team Registration</h3>
+                    <p className="text-xs text-muted-foreground">Allow visitors to register as a team.</p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Maximum Team Size</Label>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        placeholder="e.g. 1 for solo, 4 for a team of up to 4" 
+                        value={maxTeamSize} 
+                        onChange={e => setMaxTeamSize(e.target.value)} 
+                      />
+                      <p className="text-[10px] text-muted-foreground">Set to 1 to disable team registrations.</p>
+                    </div>
+
+                    {parseInt(maxTeamSize) > 1 && (
+                      <div className="space-y-2">
+                        <Label>Team Pricing Model</Label>
+                        <select
+                          value={teamPricing}
+                          onChange={(e) => setTeamPricing(e.target.value)}
+                          className="w-full flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="per_member">Per Member (Ticket Price × Number of Members)</option>
+                          <option value="flat_fee">Flat Fee (One Ticket Price for the whole team)</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
