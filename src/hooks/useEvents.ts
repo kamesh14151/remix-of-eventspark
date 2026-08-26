@@ -10,11 +10,11 @@ export function useEvents(search?: string) {
   return useQuery({
     queryKey: ["events", user?.id, search],
     queryFn: async () => {
-      let query = supabase.from("events").select("*").order("created_at", { ascending: false });
-      if (search) {
-        query = query.ilike("name", `%${search}%`);
-      }
-      const { data, error } = await query;
+      // Use RPC so the dashboard only returns events the user OWNS or is
+      // an invited member of — even though RLS now allows all authenticated
+      // users to see live events (required for /register/:slug to work).
+      const { data, error } = await supabase
+        .rpc("get_accessible_events", { p_search: search ?? null });
       if (error) throw error;
       return data as Event[];
     },

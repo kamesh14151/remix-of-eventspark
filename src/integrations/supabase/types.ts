@@ -294,6 +294,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_accessible_events: {
+        Args: { p_search?: string | null }
+        Returns: Database["public"]["Tables"]["events"]["Row"][]
+      }
       get_registration_count: { Args: { p_event_id: string }; Returns: number }
       has_role: {
         Args: {
