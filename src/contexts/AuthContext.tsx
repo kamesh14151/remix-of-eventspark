@@ -25,9 +25,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setLoading(false);
+
+        // Send a new login email alert only when a fresh SIGNED_IN event occurs
+        if (_event === "SIGNED_IN" && session?.user?.email) {
+          try {
+            // Check if we already sent this in the current session state
+            // to avoid duplicate emails if the event fires twice.
+            const sentKey = `login_email_sent_${session.user.id}`;
+            if (!sessionStorage.getItem(sentKey)) {
+              sessionStorage.setItem(sentKey, "true");
+              
+              const name = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "there";
+              // We could get browser/IP info, but we'll leave it simple for the edge function to format
+              await supabase.functions.invoke("send-auth-alerts", {
+                body: { 
+                  type: "login", 
+                  email: session.user.email,
+                  name: name,
+                  loginTime: new Date().toLocaleString(),
+                  browser: navigator.userAgent
+                },
+              });
+            }
+          } catch (e) {
+            console.error("Failed to send login alert:", e);
+          }
+        }
       }
     );
 
