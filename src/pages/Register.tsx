@@ -211,29 +211,20 @@ const Register = () => {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!consent) {
-      toast.error("Please accept the privacy policy to register.");
-      return;
-    }
-    const missing = formFields?.filter(f => f.required && !formData[f.label]?.trim());
-    if (missing && missing.length > 0) {
-      toast.error(`Please fill in: ${missing.map(f => f.label).join(", ")}`);
-      return;
-    }
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const completeRegistration = async (finalData: any) => {
     try {
-      await createReg.mutateAsync({ event_id: event.id, data: formData });
+      await createReg.mutateAsync({ event_id: event.id, data: finalData });
       
       // Fire and forget email notification
       const emailField = formFields?.find(f => f.field_type === "email")?.label || "Email";
       const nameField = formFields?.find(f => f.label.toLowerCase().includes("name"))?.label || "Name";
       
-      const email = formData[emailField] || formData["email"] || formData["Email"] || Object.values(formData).find(v => v.includes("@"));
-      const name = formData[nameField] || formData["name"] || formData["Name"];
+      const email = finalData[emailField] || finalData["email"] || finalData["Email"] || Object.values(finalData).find((v: any) => typeof v === 'string' && v.includes("@"));
+      const name = finalData[nameField] || finalData["name"] || finalData["Name"];
       
       if (email) {
-        // ONLY SEND EMAILS IN PRODUCTION
         if (!import.meta.env.DEV) {
           fetch("/api/send-email", {
             method: "POST",
@@ -255,6 +246,122 @@ const Register = () => {
       setSubmitted(true);
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!consent) {
+      toast.error("Please accept the privacy policy to register.");
+      return;
+    }
+    const missing = formFields?.filter(f => f.required && !formData[f.label]?.trim());
+    if (missing && missing.length > 0) {
+      toast.error(`Please fill in: ${missing.map(f => f.label).join(", ")}`);
+      return;
+    }
+
+    const price = event.ticket_price ? Number(event.ticket_price) : 0;
+
+    if (price > 0) {
+      setIsProcessingPayment(true);
+      try {
+        // Load razorpay script if not loaded
+        if (!(window as any).Razorpay) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://checkout.razorpay.com/v1/checkout.js";
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.appendChild(script);
+          });
+        }
+
+        // Create order via backend
+        const orderRes = await fetch("/api/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: price * 100 }), // Convert to paise
+        });
+
+        if (!orderRes.ok) {
+          throw new Error("Failed to initialize payment");
+        }
+
+        const orderData = await orderRes.json();
+        const emailField = formFields?.find(f => f.field_type === "email")?.label || "Email";
+        const nameField = formFields?.find(f => f.label.toLowerCase().includes("name"))?.label || "Name";
+
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: event.name,
+          description: "Event Registration",
+          order_id: orderData.order_id,
+          handler: async function (response: any) {
+            try {
+              // Verify payment signature
+              const verifyRes = await fetch("/api/verify-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+
+              if (verifyRes.ok) {
+                // Payment successful, proceed to register
+                await completeRegistration({
+                  ...formData,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id
+                });
+              } else {
+                toast.error("Payment verification failed.");
+                setIsProcessingPayment(false);
+              }
+            } catch (err) {
+              console.error(err);
+              toast.error("Error verifying payment.");
+              setIsProcessingPayment(false);
+            }
+          },
+          prefill: {
+            name: formData[nameField] || formData["name"] || formData["Name"] || "",
+            email: formData[emailField] || formData["email"] || formData["Email"] || ""
+          },
+          theme: {
+            color: event.primary_color || "#7C3AED"
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on("payment.failed", function (response: any) {
+          toast.error("Payment failed: " + response.error.description);
+          setIsProcessingPayment(false);
+        });
+        
+        // Handle modal close
+        options.modal = {
+          ondismiss: function() {
+            setIsProcessingPayment(false);
+          }
+        };
+        
+        rzp.open();
+      } catch (err: any) {
+        console.error(err);
+        toast.error(err.message || "Failed to initiate payment");
+        setIsProcessingPayment(false);
+      }
+    } else {
+      // Free event
+      await completeRegistration(formData);
     }
   };
 
@@ -270,7 +377,7 @@ const Register = () => {
     consent,
     onConsentChange: setConsent,
     onSubmit: handleSubmit,
-    isPending: createReg.isPending,
+    isPending: createReg.isPending || isProcessingPayment,
     brandColor,
   };
 
