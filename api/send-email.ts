@@ -34,6 +34,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let htmlContent = "";
     const targetName = name || "there";
 
+    const logoUrl = "https://remix-of-eventspark-five.vercel.app/favicon.ico"; // Or replace with a full logo URL if available
+    const creditsHtml = `
+      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB; text-align: center;">
+        <p style="font-size: 14px; color: #6B7280; margin: 0 0 8px 0;">
+          Powered by <strong>EventSpark</strong>
+        </p>
+        <p style="font-size: 12px; color: #9CA3AF; margin: 0;">
+          Developed by <strong>AJ STUDIOZ</strong>
+        </p>
+        <p style="font-size: 12px; color: #9CA3AF; margin: 8px 0 0 0;">
+          © ${new Date().getFullYear()} EventSpark. All rights reserved.
+        </p>
+      </div>
+    `;
+
     if (type === "signup") {
       subject = "Welcome to EventSpark!";
       htmlContent = `
@@ -42,6 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           <body style="background-color: #ffffff; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px 40px;">
               <div style="text-align: center; margin-bottom: 32px;">
+                <img src="${logoUrl}" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
                 <h1 style="font-size: 32px; font-weight: bold; color: #020304; margin: 0 0 16px;">
                   Welcome to EventSpark
                 </h1>
@@ -62,14 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   Go to Dashboard
                 </a>
               </div>
-              <hr style="border: 1px solid #E5E7EB; margin: 32px 0;" />
-              <div style="margin-bottom: 16px;">
-                <p style="font-size: 16px; color: #374151; margin: 0;">Questions? We're here to help!</p>
-                <p style="font-size: 16px; color: #020304; font-weight: bold; margin: 0;">The EventSpark Team</p>
-              </div>
-              <div>
-                <p style="font-size: 12px; color: #9CA3AF; margin: 0;">© ${new Date().getFullYear()} EventSpark</p>
-              </div>
+              ${creditsHtml}
             </div>
           </body>
         </html>
@@ -82,6 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           <body style="background-color: #ffffff; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Ubuntu,sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
               <div style="margin-bottom: 24px;">
+                <img src="${logoUrl}" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 0 16px 0; border-radius: 8px;" />
                 <h1 style="font-size: 32px; font-weight: 600; color: #000000; margin: 0 0 24px 0; line-height: 1.2;">
                   We've noticed a new login
                 </h1>
@@ -105,14 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   If this was you, you can ignore this alert. If you noticed any suspicious activity on your account, please secure your account immediately.
                 </p>
               </div>
-              <hr style="border-color: #e5e7eb; margin: 32px 0;" />
-              <div style="margin-bottom: 24px;">
-                <p style="font-size: 16px; color: #000000; margin: 0 0 4px 0; line-height: 1.5;">Best regards,</p>
-                <p style="font-size: 16px; color: #000000; font-weight: 600; margin: 0; line-height: 1.5;">The EventSpark Security Team</p>
-              </div>
-              <div>
-                <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0; line-height: 1.5;">© ${new Date().getFullYear()} EventSpark</p>
-              </div>
+              ${creditsHtml}
             </div>
           </body>
         </html>
@@ -125,6 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           <body style="background-color: #ffffff; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px 40px;">
               <div style="text-align: center; margin-bottom: 32px;">
+                <img src="${logoUrl}" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
                 <h1 style="font-size: 28px; font-weight: bold; color: #020304; margin: 0 0 16px;">
                   Registration Confirmed!
                 </h1>
@@ -140,14 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   You will receive more updates from the host soon.
                 </p>
               </div>
-              <hr style="border: 1px solid #E5E7EB; margin: 32px 0;" />
-              <div style="margin-bottom: 16px;">
-                <p style="font-size: 16px; color: #374151; margin: 0;">Questions? We're here to help!</p>
-                <p style="font-size: 16px; color: #020304; font-weight: bold; margin: 0;">The EventSpark Team</p>
-              </div>
-              <div>
-                <p style="font-size: 12px; color: #9CA3AF; margin: 0;">© ${new Date().getFullYear()} EventSpark</p>
-              </div>
+              ${creditsHtml}
             </div>
           </body>
         </html>
