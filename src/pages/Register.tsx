@@ -185,6 +185,7 @@ const Register = () => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [consent, setConsent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const handleFieldChange = useCallback((label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
@@ -211,7 +212,7 @@ const Register = () => {
     );
   }
 
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  // (moved up to fix rules of hooks)
 
   const completeRegistration = async (finalData: any) => {
     try {
