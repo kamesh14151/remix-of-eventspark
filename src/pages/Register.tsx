@@ -67,6 +67,14 @@ const SuccessCard = ({ brandColor, eventName }: { brandColor: string; eventName:
   </motion.div>
 );
 
+const CompactLogo = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string | null; eventName: string; className?: string }) => (
+  flyerUrl ? (
+    <div className={`w-28 h-28 sm:w-36 sm:h-36 rounded-[2rem] overflow-hidden border border-border/50 shadow-xl shrink-0 bg-background ${className}`}>
+      <img src={flyerUrl} alt={eventName} className="w-full h-full object-cover" />
+    </div>
+  ) : null
+);
+
 const EventInfo = ({ event, className = "" }: { event: Event; className?: string }) => {
   const [expanded, setExpanded] = useState(false);
   const locationIcon = event.location_type === "physical" ? <MapPin className="w-4 h-4" /> : event.location_type === "hybrid" ? <Globe className="w-4 h-4" /> : <Video className="w-4 h-4" />;
@@ -485,9 +493,12 @@ const Register = () => {
             <Card className="border-border shadow-2xl">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
-                    <Zap className="w-6 h-6 text-white" />
-                  </div>
+                  <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="mx-auto mb-6" />
+                  {!flyerUrl && (
+                    <div className="w-12 h-12 rounded-[1rem] flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
+                      <Zap className="w-6 h-6 text-white" />
+                    </div>
+                  )}
                   <EventInfo event={event} />
                 </div>
                 <RegistrationForm {...formProps} />
@@ -505,17 +516,17 @@ const Register = () => {
     return wrapDark(
       <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
         {/* Left: flyer image — top-aligned on mobile */}
-        <div className="md:w-1/2 bg-muted flex items-center justify-center p-6">
-          {flyerUrl ? (
-            <img src={flyerUrl} alt={event.name} className="w-full h-auto object-contain md:rounded-lg max-w-[300px] max-h-[300px]" />
-          ) : (
-            <div className="text-center p-6">
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
+        <div className="md:w-1/2 bg-muted/20 flex flex-col items-center justify-center p-8 md:p-12 relative overflow-hidden">
+          <div className="absolute inset-0 bg-primary/5" />
+          <div className="relative z-10 flex flex-col items-center">
+            <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="w-32 h-32 sm:w-48 sm:h-48 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl mb-8" />
+            {!flyerUrl && (
+              <div className="w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
                 <Zap className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-3xl font-display font-bold">{event.name}</h2>
-            </div>
-          )}
+            )}
+            <h2 className="text-3xl font-display font-bold text-center mt-2">{event.name}</h2>
+          </div>
         </div>
         {/* Right: form */}
         <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
@@ -533,16 +544,11 @@ const Register = () => {
   if (template === "stacked") {
     return wrapDark(
       <div className="min-h-screen bg-background text-foreground" style={{ background: isDark ? undefined : `linear-gradient(135deg, ${brandColor}15, ${brandColor}05)` }}>
-        {flyerUrl ? (
-          <div className="w-full bg-muted flex items-start justify-center" style={{ maxHeight: "50vh" }}>
-            <img src={flyerUrl} alt={event.name} className="w-full h-full object-contain" style={{ maxHeight: "50vh" }} />
-          </div>
-        ) : (
-          <div className="w-full py-16 text-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
-            <h1 className="text-4xl font-display font-bold text-white">{event.name}</h1>
-            {event.description && <p className="text-white/80 mt-2 max-w-lg mx-auto">{event.description}</p>}
-          </div>
-        )}
+        <div className="w-full py-16 text-center flex flex-col items-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
+          <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="mb-6 shadow-2xl border-white/20" />
+          <h1 className="text-4xl font-display font-bold text-white">{event.name}</h1>
+          {event.description && <p className="text-white/80 mt-2 max-w-lg mx-auto">{event.description}</p>}
+        </div>
         <div className="max-w-lg mx-auto px-4 py-12">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="border-border shadow-2xl">
@@ -563,15 +569,9 @@ const Register = () => {
     return wrapDark(
       <div className="min-h-screen bg-background text-foreground">
         <div className="relative w-full flex items-start justify-center" style={{ minHeight: "40vh" }}>
-          {flyerUrl ? (
-            <>
-              <img src={flyerUrl} alt={event.name} className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/60" />
-            </>
-          ) : (
-            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }} />
-          )}
-          <div className="relative text-center text-white px-4 py-16 z-10">
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }} />
+          <div className="relative text-center text-white px-4 py-16 z-10 flex flex-col items-center">
+            <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="mb-8 shadow-2xl border-white/20" />
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-display font-bold mb-4 truncate max-w-3xl mx-auto">{event.name}</h1>
             {event.description && <p className="text-white/80 max-w-xl mx-auto text-lg leading-relaxed mt-3">{event.description}</p>}
             <div className="flex flex-wrap items-center justify-center gap-6 mt-6 text-white/70">
@@ -609,11 +609,9 @@ const Register = () => {
       <div className="min-h-screen bg-background text-foreground" style={{ background: isDark ? undefined : `linear-gradient(135deg, ${brandColor}15, ${brandColor}05)` }}>
         <div className="max-w-4xl mx-auto px-4 py-12">
           <div className="text-center mb-10">
-            {flyerUrl && (
-              <div className="mb-6 flex justify-center">
-                <img src={flyerUrl} alt={event.name} className="max-h-64 object-contain rounded-lg" />
-              </div>
-            )}
+            <div className="mb-6 flex justify-center">
+              <CompactLogo flyerUrl={flyerUrl} eventName={event.name} />
+            </div>
             <EventInfo event={event} />
           </div>
           <div className="grid md:grid-cols-2 gap-6">

@@ -45,11 +45,11 @@ const EventInfo = ({ eventName, description, startDate, startTime, locationType 
 
 const ImagePlaceholder = ({ flyerUrl, className = "" }: { flyerUrl: string | null; className?: string }) => (
   flyerUrl ? (
-    <div className={`flex items-center justify-center overflow-hidden rounded-xl border border-border/50 shadow-sm shrink-0 bg-background ${className}`}>
+    <div className={`flex items-center justify-center overflow-hidden rounded-2xl border border-border/50 shadow-sm shrink-0 bg-background ${className}`}>
       <img src={flyerUrl} alt="Flyer" className="w-full h-full object-cover" />
     </div>
   ) : (
-    <div className={`flex items-center justify-center overflow-hidden rounded-xl border border-border/50 shadow-sm shrink-0 bg-muted ${className}`}>
+    <div className={`flex items-center justify-center overflow-hidden rounded-2xl border border-border/50 shadow-sm shrink-0 bg-muted ${className}`}>
       <div className="text-[6px] text-muted-foreground font-medium">No Image</div>
     </div>
   )
