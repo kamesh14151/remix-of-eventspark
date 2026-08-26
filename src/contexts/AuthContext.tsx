@@ -49,23 +49,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               const emailType = isNewUser ? "signup" : "login";
               
-              const apiUrl = import.meta.env.DEV 
-                ? "https://remix-of-eventspark-five.vercel.app/api/send-email" 
-                : "/api/send-email";
-
-              await fetch(apiUrl, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  type: emailType, 
-                  email: session.user.email,
-                  name: name,
-                  loginTime: new Date().toLocaleString(),
-                  browser: navigator.userAgent
-                })
-              });
+              // ONLY SEND EMAILS IN PRODUCTION
+              if (!import.meta.env.DEV) {
+                await fetch("/api/send-email", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    type: emailType, 
+                    email: session.user.email,
+                    name: name,
+                    loginTime: new Date().toLocaleString(),
+                    browser: navigator.userAgent
+                  })
+                });
+              } else {
+                console.log("[DEV MODE] Skipped sending auth email to:", session.user.email);
+              }
             }
           } catch (e) {
             console.error("Failed to send auth alert:", e);

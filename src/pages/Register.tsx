@@ -233,22 +233,23 @@ const Register = () => {
       const name = formData[nameField] || formData["name"] || formData["Name"];
       
       if (email) {
-        const apiUrl = import.meta.env.DEV 
-          ? "https://remix-of-eventspark-five.vercel.app/api/send-email" 
-          : "/api/send-email";
-
-        fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: "registration",
-            email: email,
-            name: name || "Attendee",
-            eventTitle: event.name
-          })
-        }).catch(e => console.error("Failed to send registration email:", e));
+        // ONLY SEND EMAILS IN PRODUCTION
+        if (!import.meta.env.DEV) {
+          fetch("/api/send-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              type: "registration",
+              email: email,
+              name: name || "Attendee",
+              eventTitle: event.name
+            })
+          }).catch(e => console.error("Failed to send registration email:", e));
+        } else {
+          console.log("[DEV MODE] Skipped sending registration email to:", email);
+        }
       }
 
       setSubmitted(true);
