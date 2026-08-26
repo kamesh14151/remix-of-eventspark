@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -38,15 +39,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ajLogoUrl = "https://events.ajstudioz.co.in/aj-logo.png";
     const creditsHtml = `
       <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB; text-align: center;">
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
-          <p style="font-size: 14px; color: #6B7280; margin: 0;">Powered by</p>
-          <img src="${logoUrl}" alt="EventSpark Logo" width="16" height="16" style="border-radius: 4px;" />
-          <p style="font-size: 14px; color: #6B7280; margin: 0;"><strong>EventSpark</strong></p>
+        <div style="margin-bottom: 16px;">
+          <span style="font-size: 14px; color: #6B7280; vertical-align: middle;">Powered by</span>
+          <img src="${logoUrl}" alt="EventSpark Logo" width="28" height="28" style="vertical-align: middle; margin: 0 8px; border-radius: 6px;" />
+          <strong style="font-size: 14px; color: #6B7280; vertical-align: middle;">EventSpark</strong>
         </div>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-          <p style="font-size: 14px; color: #9CA3AF; margin: 0;">Developed by</p>
-          <img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="16" height="16" style="border-radius: 4px;" />
-          <p style="font-size: 14px; color: #9CA3AF; margin: 0;"><strong>AJ STUDIOZ</strong></p>
+        <div>
+          <span style="font-size: 14px; color: #9CA3AF; vertical-align: middle;">Developed by</span>
+          <img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="28" height="28" style="vertical-align: middle; margin: 0 8px; border-radius: 6px;" />
+          <strong style="font-size: 14px; color: #9CA3AF; vertical-align: middle;">AJ STUDIOZ</strong>
         </div>
       </div>
     `;
@@ -167,7 +168,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const isPaid = amount && Number(amount) > 0;
       
       try {
-        const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
         const pdfDoc = await PDFDocument.create();
         const page = pdfDoc.addPage([595, 842]);
         
