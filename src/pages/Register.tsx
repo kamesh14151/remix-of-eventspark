@@ -224,6 +224,29 @@ const Register = () => {
     }
     try {
       await createReg.mutateAsync({ event_id: event.id, data: formData });
+      
+      // Fire and forget email notification
+      const emailField = formFields?.find(f => f.field_type === "email")?.label || "Email";
+      const nameField = formFields?.find(f => f.label.toLowerCase().includes("name"))?.label || "Name";
+      
+      const email = formData[emailField] || formData["email"] || formData["Email"] || Object.values(formData).find(v => v.includes("@"));
+      const name = formData[nameField] || formData["name"] || formData["Name"];
+      
+      if (email) {
+        fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "registration",
+            email: email,
+            name: name || "Attendee",
+            eventTitle: event.name
+          })
+        }).catch(e => console.error("Failed to send registration email:", e));
+      }
+
       setSubmitted(true);
     } catch (err: any) {
       toast.error(err.message || "Registration failed");

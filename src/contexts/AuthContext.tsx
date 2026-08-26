@@ -46,14 +46,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               
               const emailType = isNewUser ? "signup" : "login";
 
-              await supabase.functions.invoke("send-auth-alerts", {
-                body: { 
+              await fetch("/api/send-email", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
                   type: emailType, 
                   email: session.user.email,
                   name: name,
                   loginTime: new Date().toLocaleString(),
                   browser: navigator.userAgent
-                },
+                })
               });
             }
           } catch (e) {
