@@ -198,9 +198,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         page.drawText("Registration Receipt", { x: 50, y: currentY, size: 24, font: boldFont });
         currentY -= 30;
         
-        page.drawText(\`Receipt ID: \${isPaid ? paymentId : "FREE-" + Math.floor(Math.random() * 1000000)}\`, { x: 50, y: currentY, size: 12, font });
+        page.drawText(`Receipt ID: ${isPaid ? paymentId : "FREE-" + Math.floor(Math.random() * 1000000)}`, { x: 50, y: currentY, size: 12, font });
         currentY -= 15;
-        page.drawText(\`Date: \${new Date().toLocaleDateString()}\`, { x: 50, y: currentY, size: 12, font });
+        page.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: 50, y: currentY, size: 12, font });
         currentY -= 30;
         
         page.drawText("Billed To:", { x: 50, y: currentY, size: 12, font: boldFont });
@@ -212,14 +212,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         page.drawText("Event Details:", { x: 50, y: currentY, size: 12, font: boldFont });
         currentY -= 15;
-        page.drawText(\`Event: \${sanitize(eventTitle)}\`, { x: 50, y: currentY, size: 12, font });
+        page.drawText(`Event: ${sanitize(eventTitle)}`, { x: 50, y: currentY, size: 12, font });
         currentY -= 15;
-        page.drawText(\`Hosted By: \${sanitize(targetHostName)}\`, { x: 50, y: currentY, size: 12, font });
+        page.drawText(`Hosted By: ${sanitize(targetHostName)}`, { x: 50, y: currentY, size: 12, font });
         currentY -= 30;
         
         page.drawText("Payment Info:", { x: 50, y: currentY, size: 12, font: boldFont });
         currentY -= 15;
-        page.drawText(\`Amount Paid: \${isPaid ? 'Rs. ' + (Number(amount) / 100) : 'Free'}\`, { x: 50, y: currentY, size: 12, font });
+        page.drawText(`Amount Paid: ${isPaid ? 'Rs. ' + (Number(amount) / 100) : 'Free'}`, { x: 50, y: currentY, size: 12, font });
         currentY -= 30;
         
         if (teamMembers && teamMembers.length > 0) {
@@ -240,7 +240,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           currentY -= 20;
           
           teamMembers.forEach((member: any, i: number) => {
-            page.drawText(\`Member \${i + 2}\`, { x: 50, y: currentY, size: 10, font });
+            page.drawText(`Member ${i + 2}`, { x: 50, y: currentY, size: 10, font });
             page.drawText(sanitize(member.name || "N/A"), { x: 120, y: currentY, size: 10, font });
             page.drawText(sanitize(member.email || "N/A"), { x: 300, y: currentY, size: 10, font });
             currentY -= 20;
@@ -257,7 +257,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
         
         attachments.push({
-          filename: \`Receipt_\${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf\`,
+          filename: `Receipt_${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
           content: pdfBase64,
         });
       } catch (pdfErr) {
