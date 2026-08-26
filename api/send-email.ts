@@ -170,88 +170,105 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const pdfDoc = await PDFDocument.create();
         const page = pdfDoc.addPage([595, 842]);
-        
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-        
-        let currentY = 842 - 50;
-        
         const sanitize = (str: string) => (str || "").replace(/[^\\x20-\\x7E]/g, "");
+        
+        let currentY = 842 - 60;
+        const marginX = 50;
+        const contentWidth = 595 - (marginX * 2);
 
+        // Header: Logo and host
         try {
           const logoRes = await fetch(logoUrl);
           const logoArrayBuffer = await logoRes.arrayBuffer();
           const bytes = new Uint8Array(logoArrayBuffer);
-          let image;
-          if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
-            image = await pdfDoc.embedJpg(logoArrayBuffer);
-          } else {
-            image = await pdfDoc.embedPng(logoArrayBuffer);
-          }
-          page.drawImage(image, { x: 50, y: currentY - 40, width: 40, height: 40 });
-          currentY -= 60;
+          let image = bytes[0] === 0xFF && bytes[1] === 0xD8 ? await pdfDoc.embedJpg(logoArrayBuffer) : await pdfDoc.embedPng(logoArrayBuffer);
+          page.drawImage(image, { x: marginX, y: currentY - 15, width: 20, height: 20 });
+          page.drawText(sanitize(targetHostName), { x: marginX + 30, y: currentY - 10, size: 12, font: boldFont, color: rgb(0.1, 0.1, 0.4) });
+          page.drawText(`—  ${sanitize(eventTitle)}`, { x: marginX + 30 + font.widthOfTextAtSize(sanitize(targetHostName), 12) + 10, y: currentY - 10, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
         } catch (e) {
           console.error("Failed to load logo for PDF", e);
-          currentY -= 20;
+          page.drawText(sanitize(targetHostName), { x: marginX, y: currentY - 10, size: 12, font: boldFont, color: rgb(0.1, 0.1, 0.4) });
+          page.drawText(`—  ${sanitize(eventTitle)}`, { x: marginX + font.widthOfTextAtSize(sanitize(targetHostName), 12) + 10, y: currentY - 10, size: 10, font, color: rgb(0.4, 0.4, 0.4) });
         }
 
-        page.drawText("Registration Receipt", { x: 50, y: currentY, size: 24, font: boldFont });
+        currentY -= 40;
+        const receiptId = isPaid ? paymentId : "FREE-" + Math.floor(Math.random() * 1000000);
+        page.drawText(`Receipt of Payment: #${receiptId}`, { x: marginX, y: currentY, size: 22, font: boldFont });
+        currentY -= 20;
+        page.drawText(`Organization: ${sanitize(targetHostName)}`, { x: marginX, y: currentY, size: 12, font, color: rgb(0.3, 0.3, 0.3) });
+        
+        currentY -= 20;
+        page.drawLine({ start: { x: marginX, y: currentY }, end: { x: marginX + contentWidth, y: currentY }, thickness: 1, color: rgb(0.9, 0.9, 0.9) });
+        
         currentY -= 30;
-        
-        page.drawText(`Receipt ID: ${isPaid ? paymentId : "FREE-" + Math.floor(Math.random() * 1000000)}`, { x: 50, y: currentY, size: 12, font });
+        page.drawText("Attendee information", { x: marginX, y: currentY, size: 14, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
+        currentY -= 20;
+        page.drawText("NAME", { x: marginX, y: currentY, size: 9, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
+        page.drawText("EMAIL", { x: marginX + 250, y: currentY, size: 9, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
         currentY -= 15;
-        page.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: 50, y: currentY, size: 12, font });
+        page.drawText(sanitize(targetName), { x: marginX, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        page.drawText(sanitize(email), { x: marginX + 250, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        
         currentY -= 30;
+        page.drawText("Event details", { x: marginX, y: currentY, size: 14, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
+        currentY -= 20;
+        page.drawText(`${sanitize(eventTitle)} — ${new Date().toLocaleDateString()}`, { x: marginX, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
         
-        page.drawText("Billed To:", { x: 50, y: currentY, size: 12, font: boldFont });
-        currentY -= 15;
-        page.drawText(sanitize(targetName), { x: 50, y: currentY, size: 12, font });
-        currentY -= 15;
-        page.drawText(sanitize(email), { x: 50, y: currentY, size: 12, font });
-        currentY -= 30;
+        currentY -= 40;
+        page.drawText("Purchase summary", { x: marginX, y: currentY, size: 18, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
         
-        page.drawText("Event Details:", { x: 50, y: currentY, size: 12, font: boldFont });
-        currentY -= 15;
-        page.drawText(`Event: ${sanitize(eventTitle)}`, { x: 50, y: currentY, size: 12, font });
-        currentY -= 15;
-        page.drawText(`Hosted By: ${sanitize(targetHostName)}`, { x: 50, y: currentY, size: 12, font });
-        currentY -= 30;
+        currentY -= 25;
+        // Table Header Background
+        page.drawRectangle({ x: marginX, y: currentY - 10, width: contentWidth, height: 25, color: rgb(0.95, 0.95, 0.95) });
+        page.drawLine({ start: { x: marginX, y: currentY + 15 }, end: { x: marginX + contentWidth, y: currentY + 15 }, thickness: 1, color: rgb(0.85, 0.85, 0.85) });
+        page.drawLine({ start: { x: marginX, y: currentY - 10 }, end: { x: marginX + contentWidth, y: currentY - 10 }, thickness: 1, color: rgb(0.85, 0.85, 0.85) });
         
-        page.drawText("Payment Info:", { x: 50, y: currentY, size: 12, font: boldFont });
-        currentY -= 15;
-        page.drawText(`Amount Paid: ${isPaid ? 'Rs. ' + (Number(amount) / 100) : 'Free'}`, { x: 50, y: currentY, size: 12, font });
-        currentY -= 30;
+        page.drawText("Purchase", { x: marginX + 10, y: currentY, size: 11, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
+        page.drawText("Quantity", { x: marginX + 200, y: currentY, size: 11, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
+        page.drawText("Unit price", { x: marginX + 300, y: currentY, size: 11, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
+        page.drawText("Amount", { x: marginX + 420, y: currentY, size: 11, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
         
-        if (teamMembers && teamMembers.length > 0) {
-          page.drawText("Team Members:", { x: 50, y: currentY, size: 12, font: boldFont });
-          currentY -= 20;
-          
-          page.drawText("Member", { x: 50, y: currentY, size: 10, font: boldFont });
-          page.drawText("Name", { x: 120, y: currentY, size: 10, font: boldFont });
-          page.drawText("Email", { x: 300, y: currentY, size: 10, font: boldFont });
-          currentY -= 10;
-          
-          page.drawLine({ start: { x: 50, y: currentY }, end: { x: 500, y: currentY }, thickness: 1 });
-          currentY -= 15;
-          
-          page.drawText("Leader", { x: 50, y: currentY, size: 10, font });
-          page.drawText(sanitize(targetName), { x: 120, y: currentY, size: 10, font });
-          page.drawText(sanitize(email), { x: 300, y: currentY, size: 10, font });
-          currentY -= 20;
-          
-          teamMembers.forEach((member: any, i: number) => {
-            page.drawText(`Member ${i + 2}`, { x: 50, y: currentY, size: 10, font });
-            page.drawText(sanitize(member.name || "N/A"), { x: 120, y: currentY, size: 10, font });
-            page.drawText(sanitize(member.email || "N/A"), { x: 300, y: currentY, size: 10, font });
-            currentY -= 20;
-          });
-          currentY -= 10;
-        }
+        currentY -= 25;
+        const totalAttendees = teamMembers && teamMembers.length > 0 ? teamMembers.length + 1 : 1;
+        const unitPrice = isPaid ? (Number(amount) / 100) / totalAttendees : 0;
+        const formattedUnitPrice = isPaid ? `Rs. ${unitPrice.toFixed(2)}` : "Free";
+        const formattedTotal = isPaid ? `Rs. ${(Number(amount) / 100).toFixed(2)}` : "Free";
         
-        const gray = rgb(0.5, 0.5, 0.5);
-        page.drawText("Thank you for your registration!", { x: 50, y: currentY, size: 10, font, color: gray });
+        page.drawText("Registration Ticket", { x: marginX + 10, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        page.drawText(totalAttendees.toString(), { x: marginX + 200, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        page.drawText(formattedUnitPrice, { x: marginX + 300, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        page.drawText(formattedTotal, { x: marginX + 420, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        
         currentY -= 15;
-        page.drawText("Powered by EventSpark", { x: 50, y: currentY, size: 10, font, color: gray });
+        page.drawLine({ start: { x: marginX, y: currentY }, end: { x: marginX + contentWidth, y: currentY }, thickness: 1, color: rgb(0.85, 0.85, 0.85) });
+        
+        // Subtotal box
+        currentY -= 65;
+        page.drawRectangle({ x: marginX, y: currentY - 10, width: contentWidth, height: 60, color: rgb(0.97, 0.97, 0.97) });
+        
+        page.drawText("Subtotal", { x: marginX + 10, y: currentY + 30, size: 11, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
+        page.drawText(formattedTotal, { x: marginX + 420, y: currentY + 30, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        
+        page.drawText("Fees", { x: marginX + 10, y: currentY + 10, size: 11, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
+        page.drawText(isPaid ? "Rs. 0.00" : "Free", { x: marginX + 420, y: currentY + 10, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        
+        page.drawLine({ start: { x: marginX + 10, y: currentY - 5 }, end: { x: marginX + contentWidth - 10, y: currentY - 5 }, thickness: 1, color: rgb(0.85, 0.85, 0.85) });
+        
+        currentY -= 25;
+        page.drawText("Total paid", { x: marginX + 10, y: currentY + 5, size: 13, font: boldFont, color: rgb(0.1, 0.1, 0.1) });
+        page.drawText(formattedTotal, { x: marginX + 420, y: currentY + 5, size: 13, font: boldFont, color: rgb(0.1, 0.1, 0.1) });
+        
+        currentY -= 50;
+        page.drawText("Payment details", { x: marginX, y: currentY, size: 11, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
+        currentY -= 20;
+        page.drawText("PAYMENT METHOD", { x: marginX, y: currentY, size: 9, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
+        page.drawText("PAYMENT DATE", { x: marginX + 250, y: currentY, size: 9, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
+        currentY -= 15;
+        page.drawText(isPaid ? "Razorpay" : "Free Registration", { x: marginX, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+        page.drawText(new Date().toLocaleString(), { x: marginX + 250, y: currentY, size: 11, font, color: rgb(0.2, 0.2, 0.2) });
+
         
         const pdfBytes = await pdfDoc.save();
         const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
