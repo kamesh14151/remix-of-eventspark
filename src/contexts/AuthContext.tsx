@@ -32,18 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Send an email alert only when a fresh SIGNED_IN event occurs
         if (_event === "SIGNED_IN" && session?.user?.email) {
           try {
-            // Check if we already sent this in the current session state
-            // to avoid duplicate emails if the event fires twice.
-            const sentKey = `auth_email_sent_${session.user.id}`;
-            if (!sessionStorage.getItem(sentKey)) {
-              sessionStorage.setItem(sentKey, "true");
-              
               const name = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "there";
               
               // Determine if this is a brand new user (created within the last 2 minutes)
               const createdAt = new Date(session.user.created_at).getTime();
               const isNewUser = Date.now() - createdAt < 120000;
-              
+
               const emailType = isNewUser ? "signup" : "login";
               
               const apiUrl = import.meta.env.DEV 
@@ -63,7 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   browser: navigator.userAgent
                 })
               });
-            }
           } catch (e) {
             console.error("Failed to send auth alert:", e);
           }
