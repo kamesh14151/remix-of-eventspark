@@ -29,56 +29,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setLoading(false);
 
-        // Send an email alert only when a fresh SIGNED_IN event occurs
+        // Note: Email sending for auth (login/signup) has been disabled per user request to save credits.
         if (_event === "SIGNED_IN" && session?.user?.email) {
-          try {
-            // Anti-spam guard: prevent infinite loops from token refreshes
-            const sentKey = `auth_email_sent_${session.user.id}`;
-            const lastSent = sessionStorage.getItem(sentKey);
-            const now = Date.now();
-            
-            // Only send if we haven't sent in the last 5 minutes for this session
-            if (!lastSent || now - parseInt(lastSent) > 300000) {
-              sessionStorage.setItem(sentKey, now.toString());
-
-              // Ensure this is a TRULY fresh login (within the last 2 minutes)
-              // This prevents sending emails on page refresh or background token renewals
-              const lastSignInAt = session.user.last_sign_in_at ? new Date(session.user.last_sign_in_at).getTime() : 0;
-              if (Date.now() - lastSignInAt > 120000) {
-                console.log("Skipping login email: not a fresh sign-in event.");
-                return;
-              }
-
-              const name = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "there";
-              
-              // Determine if this is a brand new user (created within the last 2 minutes)
-              const createdAt = new Date(session.user.created_at).getTime();
-              const isNewUser = Date.now() - createdAt < 120000;
-
-              const emailType = isNewUser ? "signup" : "login";
-              
-              // ONLY SEND EMAILS IN PRODUCTION
-              if (!import.meta.env.DEV) {
-                await fetch("/api/send-email", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    type: emailType, 
-                    email: session.user.email,
-                    name: name,
-                    loginTime: new Date().toLocaleString(),
-                    browser: navigator.userAgent
-                  })
-                });
-              } else {
-                console.log("[DEV MODE] Skipped sending auth email to:", session.user.email);
-              }
-            }
-          } catch (e) {
-            console.error("Failed to send auth alert:", e);
-          }
+          // You can add other login logic here if needed
         }
       }
     );
