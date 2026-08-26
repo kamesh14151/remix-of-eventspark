@@ -53,6 +53,7 @@ serve(async (req: Request) => {
           <body style="background-color: #ffffff; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px 40px;">
               <div style="text-align: center; margin-bottom: 32px;">
+                <img src="https://events.ajstudioz.co.in/favicon.png" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
                 <h1 style="font-size: 32px; font-weight: bold; color: #020304; margin: 0 0 16px;">
                   Welcome to EventSpark
                 </h1>
@@ -69,17 +70,22 @@ serve(async (req: Request) => {
                 </p>
               </div>
               <div style="text-align: center; margin-bottom: 32px;">
-                <a href="https://remix-of-eventspark-five.vercel.app/dashboard" style="background-color: #020304; color: white; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; text-decoration: none; display: inline-block;">
+                <a href="https://events.ajstudioz.co.in/dashboard" style="background-color: #020304; color: white; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; text-decoration: none; display: inline-block;">
                   Go to Dashboard
                 </a>
               </div>
-              <hr style="border: 1px solid #E5E7EB; margin: 32px 0;" />
-              <div style="margin-bottom: 16px;">
-                <p style="font-size: 16px; color: #374151; margin: 0;">Questions? We're here to help!</p>
-                <p style="font-size: 16px; color: #020304; font-weight: bold; margin: 0;">The EventSpark Team</p>
-              </div>
-              <div>
-                <p style="font-size: 12px; color: #9CA3AF; margin: 0;">© ${new Date().getFullYear()} EventSpark</p>
+              <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB; text-align: center;">
+                <p style="font-size: 14px; color: #6B7280; margin: 0 0 16px 0;">
+                  Powered by <strong>EventSpark</strong>
+                </p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <p style="font-size: 14px; color: #9CA3AF; margin: 0;">Developed by</p>
+                  <img src="https://events.ajstudioz.co.in/aj-logo.png" alt="AJ STUDIOZ Logo" width="20" height="20" style="border-radius: 4px;" />
+                  <p style="font-size: 14px; color: #9CA3AF; margin: 0;"><strong>AJ STUDIOZ</strong></p>
+                </div>
+                <p style="font-size: 12px; color: #9CA3AF; margin: 12px 0 0 0;">
+                  © ${new Date().getFullYear()} EventSpark. All rights reserved.
+                </p>
               </div>
             </div>
           </body>

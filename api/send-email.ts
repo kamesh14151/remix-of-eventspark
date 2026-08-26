@@ -34,8 +34,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let subject = "";
     let htmlContent = "";
     const targetName = name || "there";
-    const logoUrl = "https://remix-of-eventspark-five.vercel.app/favicon.png"; 
-    const ajLogoUrl = "https://remix-of-eventspark-five.vercel.app/aj-logo.png";
+    const logoUrl = "https://events.ajstudioz.co.in/favicon.png"; 
+    const ajLogoUrl = "https://events.ajstudioz.co.in/aj-logo.png";
     const creditsHtml = `
       <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB; text-align: center;">
         <p style="font-size: 14px; color: #6B7280; margin: 0 0 16px 0;">
@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 </p>
               </div>
               <div style="text-align: center; margin-bottom: 32px;">
-                <a href="https://remix-of-eventspark-five.vercel.app/dashboard" style="background-color: #020304; color: white; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; text-decoration: none; display: inline-block;">
+                <a href="https://events.ajstudioz.co.in/dashboard" style="background-color: #020304; color: white; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 500; text-decoration: none; display: inline-block;">
                   Go to Dashboard
                 </a>
               </div>
