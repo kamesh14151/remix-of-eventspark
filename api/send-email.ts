@@ -155,7 +155,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: "EventSpark <onboarding@resend.dev>",
+      from: "EventSpark <eventspark@ajstudioz.co.in>",
       to: email,
       subject: subject,
       html: htmlContent,
