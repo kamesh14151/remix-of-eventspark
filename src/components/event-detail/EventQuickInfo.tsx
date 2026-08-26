@@ -1,21 +1,82 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tables } from "@/integrations/supabase/types";
-import { CalendarDays, ImageIcon, Upload, Trash2, MapPin, Type, FileText, Globe } from "lucide-react";
+import { CalendarDays, ImageIcon, Upload, Trash2, MapPin, Type, FileText, Globe, Save, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Props {
   event: Tables<"events">;
-  onUpdate: (fields: Partial<Tables<"events">>) => void;
+  onUpdate: (fields: Partial<Tables<"events">>) => Promise<void>;
+  isUpdating?: boolean;
 }
 
-export default function EventQuickInfo({ event, onUpdate }: Props) {
+export default function EventQuickInfo({ event, onUpdate, isUpdating }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Local state for all fields
+  const [formData, setFormData] = useState({
+    name: event.name || "",
+    description: event.description || "",
+    event_date: event.event_date ? new Date(event.event_date).toISOString().slice(0, 16) : "",
+    event_end_date: event.event_end_date ? new Date(event.event_end_date).toISOString().slice(0, 16) : "",
+    event_type: event.event_type || "webinar",
+    location_type: event.location_type || "virtual",
+    location_value: event.location_value || "",
+  });
+
+  // Track if changes are made to show the Save button
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    // Reset local state when event data changes (e.g. initial load)
+    setFormData({
+      name: event.name || "",
+      description: event.description || "",
+      event_date: event.event_date ? new Date(event.event_date).toISOString().slice(0, 16) : "",
+      event_end_date: event.event_end_date ? new Date(event.event_end_date).toISOString().slice(0, 16) : "",
+      event_type: event.event_type || "webinar",
+      location_type: event.location_type || "virtual",
+      location_value: event.location_value || "",
+    });
+    setHasChanges(false);
+  }, [event]);
+
+  const handleChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      toast.error("Event name is required");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onUpdate({
+        name: formData.name.trim(),
+        description: formData.description || null,
+        event_date: formData.event_date ? new Date(formData.event_date).toISOString() : null,
+        event_end_date: formData.event_end_date ? new Date(formData.event_end_date).toISOString() : null,
+        event_type: formData.event_type,
+        location_type: formData.location_type,
+        location_value: formData.location_value || null,
+      });
+      setHasChanges(false);
+      toast.success("Event details saved successfully");
+    } catch (error) {
+      toast.error("Failed to save event details");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,17 +108,18 @@ export default function EventQuickInfo({ event, onUpdate }: Props) {
   };
 
   return (
-    <div className="bg-card rounded-xl p-4 sm:p-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div className="bg-card rounded-xl p-4 sm:p-6 shadow-sm border">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left column: Event Image */}
-        <div className="space-y-2 flex items-center justify-center">
-          <div className="w-full max-w-[300px] aspect-square rounded-xl overflow-hidden bg-muted flex items-center justify-center relative group">
+        <div className="space-y-2 flex flex-col items-center justify-start">
+          <Label className="self-start text-sm font-semibold mb-2">Event Image</Label>
+          <div className="w-full max-w-[300px] aspect-square rounded-xl overflow-hidden bg-muted flex items-center justify-center relative group border border-border">
             {event.background_image_url ? (
               <>
                 <img
                   src={event.background_image_url}
                   alt={event.name}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button variant="secondary" size="sm" className="h-8 text-xs rounded-full" onClick={() => fileInputRef.current?.click()}>
@@ -71,7 +133,7 @@ export default function EventQuickInfo({ event, onUpdate }: Props) {
             ) : (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer w-full h-full justify-center"
               >
                 <ImageIcon className="w-8 h-8" />
                 <span className="text-sm">Upload event image</span>
@@ -88,93 +150,114 @@ export default function EventQuickInfo({ event, onUpdate }: Props) {
         </div>
 
         {/* Right column: All editable fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 content-start">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-xs flex items-center gap-1">
-              <Type className="w-3 h-3" /> Event name
-            </Label>
-            <Input
-              className="h-9 text-sm font-medium rounded-full"
-              defaultValue={event.name}
-              onBlur={(e) => {
-                if (e.target.value.trim() && e.target.value !== event.name) {
-                  onUpdate({ name: e.target.value.trim() });
-                }
-              }}
-            />
+        <div className="flex flex-col h-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 content-start flex-1">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                <Type className="w-3.5 h-3.5" /> Event name
+              </Label>
+              <Input
+                className="h-10 text-sm font-medium rounded-lg"
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                placeholder="E.g. Tech Conference 2026"
+              />
+            </div>
+            
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                <FileText className="w-3.5 h-3.5" /> Description
+              </Label>
+              <Textarea
+                className="text-sm min-h-[100px] resize-y rounded-lg"
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+                placeholder="What is this event about?"
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                <CalendarDays className="w-3.5 h-3.5" /> Event date
+              </Label>
+              <Input
+                type="datetime-local"
+                className="h-10 text-sm rounded-lg"
+                value={formData.event_date}
+                onChange={(e) => handleChange("event_date", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                <CalendarDays className="w-3.5 h-3.5" /> End date
+              </Label>
+              <Input
+                type="datetime-local"
+                className="h-10 text-sm rounded-lg"
+                value={formData.event_end_date}
+                onChange={(e) => handleChange("event_end_date", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                <Globe className="w-3.5 h-3.5" /> Event type
+              </Label>
+              <Select value={formData.event_type} onValueChange={v => handleChange("event_type", v)}>
+                <SelectTrigger className="h-10 text-sm rounded-lg"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="webinar">Webinar</SelectItem>
+                  <SelectItem value="conference">Conference</SelectItem>
+                  <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="hackathon">Hackathon</SelectItem>
+                  <SelectItem value="meetup">Meetup</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                <MapPin className="w-3.5 h-3.5" /> Location type
+              </Label>
+              <Select value={formData.location_type} onValueChange={v => handleChange("location_type", v)}>
+                <SelectTrigger className="h-10 text-sm rounded-lg"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="virtual">Virtual</SelectItem>
+                  <SelectItem value="physical">Physical</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-1.5 sm:col-span-2 mb-4">
+              <Label className="text-xs flex items-center gap-1 font-medium text-muted-foreground">
+                <MapPin className="w-3.5 h-3.5" /> Location / link
+              </Label>
+              <Input
+                className="h-10 text-sm rounded-lg"
+                placeholder="Zoom link, venue address, etc."
+                value={formData.location_value}
+                onChange={(e) => handleChange("location_value", e.target.value)}
+              />
+            </div>
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-xs flex items-center gap-1">
-              <FileText className="w-3 h-3" /> Description
-            </Label>
-            <Textarea
-              className="text-sm min-h-[80px] resize-y rounded-2xl"
-              defaultValue={event.description || ""}
-              rows={3}
-              onBlur={(e) => onUpdate({ description: e.target.value || null })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1">
-              <CalendarDays className="w-3 h-3" /> Event date
-            </Label>
-            <Input
-              type="datetime-local"
-              className="h-9 text-sm rounded-full"
-              defaultValue={event.event_date ? new Date(event.event_date).toISOString().slice(0, 16) : ""}
-              onBlur={(e) => onUpdate({ event_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1">
-              <CalendarDays className="w-3 h-3" /> End date
-            </Label>
-            <Input
-              type="datetime-local"
-              className="h-9 text-sm rounded-full"
-              defaultValue={event.event_end_date ? new Date(event.event_end_date).toISOString().slice(0, 16) : ""}
-              onBlur={(e) => onUpdate({ event_end_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1">
-              <Globe className="w-3 h-3" /> Event type
-            </Label>
-            <Select defaultValue={event.event_type || "webinar"} onValueChange={v => onUpdate({ event_type: v })}>
-              <SelectTrigger className="h-9 text-sm rounded-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="webinar">Webinar</SelectItem>
-                <SelectItem value="conference">Conference</SelectItem>
-                <SelectItem value="workshop">Workshop</SelectItem>
-                <SelectItem value="hackathon">Hackathon</SelectItem>
-                <SelectItem value="meetup">Meetup</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> Location type
-            </Label>
-            <Select defaultValue={event.location_type || "virtual"} onValueChange={v => onUpdate({ location_type: v })}>
-              <SelectTrigger className="h-9 text-sm rounded-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="virtual">Virtual</SelectItem>
-                <SelectItem value="physical">Physical</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-xs flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> Location / link
-            </Label>
-            <Input
-              className="h-9 text-sm rounded-full"
-              placeholder="Zoom link, venue address, etc."
-              defaultValue={event.location_value || ""}
-              onBlur={(e) => onUpdate({ location_value: e.target.value || null })}
-            />
+
+          {/* Save Button */}
+          <div className="mt-6 pt-4 border-t flex items-center justify-between sm:justify-end">
+            {hasChanges && <span className="text-sm text-muted-foreground mr-4 hidden sm:inline-block">Unsaved changes</span>}
+            <Button 
+              onClick={handleSave} 
+              disabled={!hasChanges || isSaving || isUpdating}
+              className={`rounded-full shadow-sm transition-all ${hasChanges ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted'}`}
+            >
+              {isSaving || isUpdating ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+              ) : (
+                <><Save className="w-4 h-4 mr-2" /> Save Changes</>
+              )}
+            </Button>
           </div>
         </div>
       </div>

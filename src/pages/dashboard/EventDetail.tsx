@@ -57,8 +57,8 @@ const EventDetail = () => {
     navigate("/dashboard/events");
   };
 
-  const handleUpdate = (fields: any) => {
-    updateEvent.mutate({ id: event.id, ...fields });
+  const handleUpdate = async (fields: any) => {
+    await updateEvent.mutateAsync({ id: event.id, ...fields });
   };
 
   const handleAddField = async () => {
