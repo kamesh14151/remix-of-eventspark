@@ -5,14 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy } from "lucide-react";
 import { useEventBySlug, Event } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Tables } from "@/integrations/supabase/types";
-import { studentHackathonFields, yearOfStudyOptions, popularDepartments } from "@/lib/studentFields";
+import { studentHackathonFields, yearOfStudyOptions, popularDepartments, popularColleges } from "@/lib/studentFields";
+import { CollegeSelect, DepartmentSelect } from "@/components/registration/CollegeAndDeptSelectors";
 
 type FormField = Tables<"form_fields">;
 
@@ -185,11 +186,32 @@ const RegistrationForm = ({
   maxTeamSize?: number;
   isHackathon?: boolean;
 }) => {
+  const leadCollege = Object.entries(formData).find(([k]) => /college|university|clg|institution/i.test(k))?.[1] || "";
+  const leadDept = Object.entries(formData).find(([k]) => /department|dept|branch|stream/i.test(k))?.[1] || "";
+  const showCollegeDeptForTeam = isHackathon || formFields?.some(f => /college|university|clg|institution|department|dept|branch/i.test(f.label));
+
   const addTeamMember = () => {
     if (onTeamMembersChange && teamMembers && maxTeamSize && teamMembers.length < maxTeamSize - 1) {
-      // Find lead's college if entered
-      const leadCollege = Object.entries(formData).find(([k]) => /college|university|clg/i.test(k))?.[1] || "";
-      onTeamMembersChange([...teamMembers, { name: "", email: "", college: leadCollege, department: "" }]);
+      onTeamMembersChange([
+        ...teamMembers,
+        { name: "", email: "", college: leadCollege, department: leadDept },
+      ]);
+      if (leadCollege || leadDept) {
+        toast.info("Auto-filled teammate with Team Lead's college & department");
+      }
+    }
+  };
+
+  const copyLeadDetails = (index: number) => {
+    if (onTeamMembersChange && teamMembers) {
+      const updated = [...teamMembers];
+      updated[index] = {
+        ...updated[index],
+        college: leadCollege || updated[index].college,
+        department: leadDept || updated[index].department,
+      };
+      onTeamMembersChange(updated);
+      toast.success(`Applied Team Lead's college & department to Member ${index + 2}`);
     }
   };
 
@@ -221,13 +243,6 @@ const RegistrationForm = ({
           </div>
         </div>
       )}
-
-      {/* Datalist for department suggestions */}
-      <datalist id="register-dept-suggestions">
-        {popularDepartments.map((dept) => (
-          <option key={dept} value={dept} />
-        ))}
-      </datalist>
 
       {formFields?.map((field) => {
         const isYearField = /year of study|academic year/i.test(field.label);
@@ -265,15 +280,32 @@ const RegistrationForm = ({
               </div>
             )}
 
-            <Input
-              type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
-              placeholder={field.placeholder || field.label}
-              required={field.required}
-              list={isDeptField ? "register-dept-suggestions" : undefined}
-              value={formData[field.label] || ""}
-              onChange={e => onFieldChange(field.label, e.target.value)}
-              className="h-10 text-sm rounded-xl"
-            />
+            {isCollegeField ? (
+              <CollegeSelect
+                value={formData[field.label] || ""}
+                onChange={(val) => onFieldChange(field.label, val)}
+                required={field.required}
+                placeholder={field.placeholder || "Select College / University"}
+                size="md"
+              />
+            ) : isDeptField ? (
+              <DepartmentSelect
+                value={formData[field.label] || ""}
+                onChange={(val) => onFieldChange(field.label, val)}
+                required={field.required}
+                placeholder={field.placeholder || "Select Department / Branch"}
+                size="md"
+              />
+            ) : (
+              <Input
+                type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
+                placeholder={field.placeholder || field.label}
+                required={field.required}
+                value={formData[field.label] || ""}
+                onChange={e => onFieldChange(field.label, e.target.value)}
+                className="h-10 text-sm rounded-xl"
+              />
+            )}
           </div>
         );
       })}
@@ -294,9 +326,21 @@ const RegistrationForm = ({
                 <div key={idx} className="p-4 bg-muted/40 rounded-xl relative space-y-3 border border-border">
                   <div className="flex items-center justify-between pb-1 border-b border-border/50">
                     <span className="text-xs font-semibold text-primary">Member {idx + 2}</span>
-                    <button type="button" onClick={() => removeTeamMember(idx)} className="text-muted-foreground hover:text-destructive text-xs flex items-center gap-1">
-                      <Trash2 className="w-3.5 h-3.5" /> Remove
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {showCollegeDeptForTeam && (leadCollege || leadDept) && (
+                        <button
+                          type="button"
+                          onClick={() => copyLeadDetails(idx)}
+                          className="text-[11px] font-medium text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20 px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
+                          title="Auto-fill with Team Lead's College & Department"
+                        >
+                          <Copy className="w-3 h-3" /> Same as Team Lead
+                        </button>
+                      )}
+                      <button type="button" onClick={() => removeTeamMember(idx)} className="text-muted-foreground hover:text-destructive text-xs flex items-center gap-1">
+                        <Trash2 className="w-3.5 h-3.5" /> Remove
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
@@ -307,15 +351,29 @@ const RegistrationForm = ({
                       <Label className="text-[11px] text-muted-foreground">Email Address *</Label>
                       <Input required type="email" value={member.email} onChange={e => updateTeamMember(idx, "email", e.target.value)} placeholder="member@college.edu" className="h-9 text-xs rounded-lg" />
                     </div>
-                    {isHackathon && (
+                    {showCollegeDeptForTeam && (
                       <>
                         <div className="space-y-1">
-                          <Label className="text-[11px] text-muted-foreground">College / University</Label>
-                          <Input value={member.college || ""} onChange={e => updateTeamMember(idx, "college", e.target.value)} placeholder="College Name" className="h-9 text-xs rounded-lg" />
+                          <Label className="text-[11px] text-muted-foreground flex items-center gap-1">
+                            <School className="w-3 h-3 text-primary" /> College / University
+                          </Label>
+                          <CollegeSelect
+                            value={member.college || ""}
+                            onChange={(val) => updateTeamMember(idx, "college", val)}
+                            size="sm"
+                            placeholder="Select College"
+                          />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[11px] text-muted-foreground">Department</Label>
-                          <Input list="register-dept-suggestions" value={member.department || ""} onChange={e => updateTeamMember(idx, "department", e.target.value)} placeholder="e.g. CSE" className="h-9 text-xs rounded-lg" />
+                          <Label className="text-[11px] text-muted-foreground flex items-center gap-1">
+                            <GraduationCap className="w-3 h-3 text-primary" /> Department / Branch
+                          </Label>
+                          <DepartmentSelect
+                            value={member.department || ""}
+                            onChange={(val) => updateTeamMember(idx, "department", val)}
+                            size="sm"
+                            placeholder="Select Department"
+                          />
                         </div>
                       </>
                     )}
