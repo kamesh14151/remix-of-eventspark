@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users } from "lucide-react";
 import { useEventBySlug, Event } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
@@ -53,7 +53,7 @@ function formatEventDateTime(event: Event) {
 
 // ─── Extracted stable components ───
 
-const SuccessCard = ({ brandColor, eventName }: { brandColor: string; eventName: string }) => (
+const SuccessCard = ({ brandColor, event, teamMembers }: { brandColor: string; event: Event; teamMembers: TeamMember[] }) => (
   <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg mx-auto">
     <Card className="border-border shadow-2xl">
       <CardContent className="p-8 text-center">
@@ -61,7 +61,25 @@ const SuccessCard = ({ brandColor, eventName }: { brandColor: string; eventName:
           <CheckCircle2 className="w-16 h-16 mx-auto mb-4" style={{ color: brandColor }} />
         </motion.div>
         <h2 className="text-2xl font-display font-bold mb-2">You're Registered!</h2>
-        <p className="text-muted-foreground">Thank you for registering for <strong>{eventName}</strong>. You'll receive a confirmation email shortly.</p>
+        <p className="text-muted-foreground">Thank you for registering for <strong>{event.name}</strong>. You'll receive a confirmation email shortly.</p>
+        <div className="mt-6 border-t border-border pt-5 text-left space-y-4">
+          {formatEventDateTime(event) && (
+            <div className="flex items-start gap-3 text-sm">
+              <CalendarDays className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+              <div><p className="font-medium">Date and time</p><p className="text-muted-foreground">{formatEventDateTime(event)}</p></div>
+            </div>
+          )}
+          <div className="flex items-start gap-3 text-sm">
+            {event.location_type === "physical" ? <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" /> : event.location_type === "hybrid" ? <Globe className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" /> : <Video className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />}
+            <div className="min-w-0"><p className="font-medium">{event.location_type === "physical" ? "Venue" : event.location_type === "hybrid" ? "Venue and online" : "Online location"}</p><p className="text-muted-foreground break-words">{event.location_value || (event.location_type === "physical" ? "Location details will be shared by the host." : "Online details will be shared by the host.")}</p></div>
+          </div>
+          {teamMembers.length > 0 && (
+            <div className="flex items-start gap-3 text-sm">
+              <Users className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+              <div className="min-w-0"><p className="font-medium">Team members ({teamMembers.length})</p><ul className="mt-1 space-y-1 text-muted-foreground">{teamMembers.map((member, index) => <li key={`${member.email}-${index}`} className="break-words">{member.name} · {member.email}</li>)}</ul></div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   </motion.div>
@@ -292,19 +310,17 @@ const Register = () => {
 
   const completeRegistration = async (finalData: any) => {
     try {
-      await createReg.mutateAsync({ event_id: event.id, data: finalData });
+      const registrationId = await createReg.mutateAsync({ event_id: event.id, data: finalData });
       
       // Fire and forget email notification
       const emailField = formFields?.find(f => f.field_type === "email")?.label || "Email";
-      const nameField = formFields?.find(f => f.label.toLowerCase().includes("name") || f.label.toLowerCase().includes("first"))?.label || "Name";
-      
-      const email = (finalData[emailField] || finalData["email"] || finalData["Email"] || Object.values(finalData).find((v: any) => typeof v === 'string' && v.includes("@")) || "").toString().trim();
-      let name = (finalData[nameField] || finalData["name"] || finalData["Name"] || finalData["Full Name"] || "").toString().trim();
-      if (!name) {
-        const potentialName = Object.values(finalData).find((v: any) => typeof v === 'string' && v.length > 2 && !v.includes('@') && !/^\\d+$/.test(v));
-        if (potentialName) name = potentialName as string;
-      }
-      if (!name || name.trim() === "") name = "Attendee";
+      const lowerLabel = (field: FormField) => field.label.toLowerCase().trim();
+      const fullNameField = formFields?.find(field => /^(full name|attendee name|name)$/.test(lowerLabel(field)));
+      const firstNameField = formFields?.find(field => /first name|^first$/.test(lowerLabel(field)));
+      const lastNameField = formFields?.find(field => /last name|surname|^last$/.test(lowerLabel(field)));
+      const email = (formData[emailField] || formData["email"] || formData["Email"] || Object.values(formData).find((value) => typeof value === "string" && value.includes("@")) || "").toString().trim();
+      const firstAndLastName = [firstNameField && formData[firstNameField.label], lastNameField && formData[lastNameField.label]].filter(Boolean).join(" ").trim();
+      const name = (fullNameField && formData[fullNameField.label] || firstAndLastName || formData["name"] || formData["Name"] || Object.values(formData).find((value) => typeof value === "string" && value.trim().length > 2 && !value.includes("@")) || "Attendee").toString().trim();
       
       if (email) {
         if (!import.meta.env.DEV) {
@@ -316,13 +332,21 @@ const Register = () => {
             body: JSON.stringify({
               type: "registration",
               email: email,
-              name: name || "Attendee",
+              name,
               eventTitle: event.name,
               eventDate: formatEventDateTime(event),
+              eventEndDate: event.event_end_date ? new Date(event.event_end_date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: event.timezone || "America/New_York" }) : "",
+              eventTimezone: event.timezone || "",
+              eventType: event.event_type || "Event",
               eventLocation: event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual",
+              venueDetails: event.location_value || "",
+              eventDescription: event.description || "",
               hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
-              amount: finalData.razorpay_payment_id ? event.ticket_price ? Number(event.ticket_price) * 100 : 0 : undefined,
+              amount: finalData.razorpay_payment_id ? Number(finalData.razorpay_amount || 0) : undefined,
               paymentId: finalData.razorpay_payment_id,
+              registrationId,
+              ticketPrice: event.ticket_price || 0,
+              teamPricing: event.team_pricing || "",
               teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
               flyerUrl: event.background_image_url
             })
@@ -412,6 +436,7 @@ const Register = () => {
                   ...formData,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id,
+                  razorpay_amount: orderData.amount,
                   team_members: teamMembers.length > 0 ? teamMembers : undefined
                 });
               } else {
@@ -486,7 +511,7 @@ const Register = () => {
   if (submitted) {
     return wrapDark(
       <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background text-foreground" style={{ background: isDark ? undefined : `linear-gradient(135deg, ${brandColor}15, ${brandColor}05)` }}>
-        <SuccessCard brandColor={brandColor} eventName={event.name} />
+        <SuccessCard brandColor={brandColor} event={event} teamMembers={teamMembers} />
       </div>
     );
   }
