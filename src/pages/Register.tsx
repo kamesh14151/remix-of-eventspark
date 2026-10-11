@@ -359,7 +359,7 @@ const PoweredBy = () => (
 
 const Register = () => {
   const { slug } = useParams();
-  const { data: event, isLoading: eventLoading } = useEventBySlug(slug);
+  const { data: event, isLoading: eventLoading, isError: eventError } = useEventBySlug(slug);
   const { data: formFields, isLoading: fieldsLoading } = useFormFields(event?.id);
   const createReg = useCreateRegistration();
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -372,7 +372,10 @@ const Register = () => {
     setFormData(prev => ({ ...prev, [label]: value }));
   }, []);
 
-  if (eventLoading || (event && fieldsLoading)) {
+  // Only show spinner while the EVENT itself is loading.
+  // Once we have (or know we don't have) the event, render immediately.
+  // Don't block on fieldsLoading — the form gracefully shows fallback fields.
+  if (eventLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -380,13 +383,14 @@ const Register = () => {
     );
   }
 
-  if (!event) {
+  // Event not found or errored (e.g. draft/past event, wrong slug)
+  if (!event || eventError) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
             <h1 className="text-2xl font-display font-bold mb-2">Event Not Found</h1>
-            <p className="text-muted-foreground">This event may have ended or the link is invalid.</p>
+            <p className="text-muted-foreground">This event may have ended, is not yet published, or the link is invalid.</p>
           </CardContent>
         </Card>
       </div>

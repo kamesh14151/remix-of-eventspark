@@ -43,16 +43,20 @@ export function useEventBySlug(slug: string | undefined) {
         .select("*")
         .eq("slug", slug!)
         .eq("status", "live")
-        .single();
+        .maybeSingle(); // Returns null (not an error) when no row matches
+      
+      // A real DB error (network, permissions) — rethrow so React Query marks as error
       if (error) throw error;
+      // No live event found for this slug — return null, Register shows "Not Found"
+      if (!event) return null;
       
       let hostProfile = null;
-      if (event && event.user_id) {
+      if (event.user_id) {
         const { data: profileData } = await supabase
           .from("profiles")
           .select("company, full_name")
           .eq("id", event.user_id)
-          .single();
+          .maybeSingle();
         hostProfile = profileData;
       }
       
