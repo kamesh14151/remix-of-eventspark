@@ -49,44 +49,10 @@ export type Database = {
           },
         ]
       }
-      event_members: {
-        Row: {
-          id: string
-          event_id: string
-          user_id: string
-          invited_by: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          event_id: string
-          user_id: string
-          invited_by?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          event_id?: string
-          user_id?: string
-          invited_by?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_members_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       events: {
         Row: {
           background_image_url: string | null
           capacity: number | null
-          max_team_size: number | null
-          team_pricing: string | null
           color_mode: string | null
           created_at: string
           description: string | null
@@ -113,8 +79,6 @@ export type Database = {
         Insert: {
           background_image_url?: string | null
           capacity?: number | null
-          max_team_size?: number | null
-          team_pricing?: string | null
           color_mode?: string | null
           created_at?: string
           description?: string | null
@@ -141,8 +105,6 @@ export type Database = {
         Update: {
           background_image_url?: string | null
           capacity?: number | null
-          max_team_size?: number | null
-          team_pricing?: string | null
           color_mode?: string | null
           created_at?: string
           description?: string | null
@@ -300,10 +262,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_accessible_events: {
-        Args: { p_search?: string | null }
-        Returns: Database["public"]["Tables"]["events"]["Row"][]
-      }
       get_registration_count: { Args: { p_event_id: string }; Returns: number }
       has_role: {
         Args: {
@@ -312,21 +270,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      invite_member_to_event: {
-        Args: { p_event_id: string; p_email: string }
-        Returns: Json
-      }
-      is_event_member: {
-        Args: { p_event_id: string; p_user_id: string }
-        Returns: boolean
-      }
       register_for_event: {
         Args: { p_data: Json; p_event_id: string }
         Returns: string
-      }
-      remove_event_member: {
-        Args: { p_event_id: string; p_user_id: string }
-        Returns: undefined
       }
     }
     Enums: {
@@ -349,12 +295,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -378,11 +324,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -403,11 +349,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -428,11 +374,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -445,11 +391,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
