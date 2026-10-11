@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Phone, Github, CheckCircle2 } from "lucide-react";
-import { useRegistrationsByEvent } from "@/hooks/useRegistrations";
+import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Phone, Github, Trash2 } from "lucide-react";
+import { useRegistrationsByEvent, useDeleteRegistration } from "@/hooks/useRegistrations";
 import { useEvent } from "@/hooks/useEvents";
 import { format } from "date-fns";
 import SendEmailDialog from "@/components/email/SendEmailDialog";
 import { extractStudentInfo } from "@/lib/studentFields";
+import { toast } from "sonner";
 
 const statusStyle: Record<string, string> = {
   registered: "bg-primary/10 text-primary border-0",
@@ -37,6 +38,7 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
   const { data: registrations, isLoading } = useRegistrationsByEvent(eventId);
   const { data: fetchedEvent } = useEvent(eventId);
   const event = propEvent || fetchedEvent || { id: eventId, name: "Event" };
+  const deleteReg = useDeleteRegistration();
 
   const handleSort = (col: SortColumn) => {
     if (sortColumn === col) {
@@ -101,6 +103,22 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
     setEmailRecipients([{ name, email }]);
     setEmailModalTitle(`Send Email to ${name}`);
     setEmailModalOpen(true);
+  };
+
+  // Delete attendee
+  const handleDeleteAttendee = async (r: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const data = (r.data || {}) as Record<string, string>;
+    const student = extractStudentInfo(data);
+    const name = student.name || data["Full Name"] || data["Name"] || "this attendee";
+    if (!confirm(`Remove "${name}" from this event? This cannot be undone.`)) return;
+    try {
+      await deleteReg.mutateAsync(r.id);
+      toast.success(`${name} removed from attendees`);
+      if (selectedAttendee?.id === r.id) setSelectedAttendee(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete attendee");
+    }
   };
 
   // Manual Email Trigger broadcast to all filtered attendees
@@ -306,6 +324,16 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
+                            title="Delete attendee"
+                            disabled={deleteReg.isPending}
+                            onClick={(e) => handleDeleteAttendee(r, e)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -452,23 +480,47 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
                   </div>
                 )}
 
+                {/* Phone number */}
+                {(() => {
+                  const phone = extractStudentInfo(data).phone ||
+                    data["Phone Number"] || data["Phone"] || data["Mobile"] || data["Mobile Number"] || "";
+                  return phone ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground border-t border-border pt-3">
+                      <Phone className="w-3.5 h-3.5 shrink-0 text-primary" />
+                      <a href={`tel:${phone}`} className="hover:text-foreground transition-colors">{phone}</a>
+                    </div>
+                  ) : null;
+                })()}
+
                 {/* Bottom actions */}
-                <div className="border-t border-border pt-4 flex items-center justify-between">
+                <div className="border-t border-border pt-4 flex items-center justify-between gap-2">
                   <span className="text-xs text-muted-foreground">
                     Registered {format(new Date(selectedAttendee.created_at), "MMM d, yyyy 'at' h:mm a")}
                   </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="rounded-full text-xs"
-                    onClick={() => {
-                      const r = selectedAttendee;
-                      setSelectedAttendee(null);
-                      handleOpenSingleEmail(r);
-                    }}
-                  >
-                    <Mail className="w-3.5 h-3.5 mr-1.5" /> Trigger Email to Attendee
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      className="rounded-full text-xs"
+                      disabled={deleteReg.isPending}
+                      onClick={() => handleDeleteAttendee(selectedAttendee)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="rounded-full text-xs"
+                      onClick={() => {
+                        const r = selectedAttendee;
+                        setSelectedAttendee(null);
+                        handleOpenSingleEmail(r);
+                      }}
+                    >
+                      <Mail className="w-3.5 h-3.5 mr-1.5" /> Trigger Email
+                    </Button>
+                  </div>
                 </div>
               </div>
             );

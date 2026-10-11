@@ -54,6 +54,20 @@ export function useCreateRegistration() {
   });
 }
 
+export function useDeleteRegistration() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (registrationId: string) => {
+      const { error } = await supabase
+        .from("registrations")
+        .delete()
+        .eq("id", registrationId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["registrations"] }),
+  });
+}
+
 export function useRegistrationStats() {
   return useQuery({
     queryKey: ["registration-stats"],

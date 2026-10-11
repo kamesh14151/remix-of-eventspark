@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Github } from "lucide-react";
-import { useRegistrations, Registration } from "@/hooks/useRegistrations";
+import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Github, Trash2, Phone } from "lucide-react";
+import { useRegistrations, useDeleteRegistration, Registration } from "@/hooks/useRegistrations";
 import { useRegistrationStats } from "@/hooks/useRegistrations";
 import { format } from "date-fns";
 import SendEmailDialog from "@/components/email/SendEmailDialog";
 import { extractStudentInfo } from "@/lib/studentFields";
+import { toast } from "sonner";
 
 const statusStyle: Record<string, string> = {
   registered: "bg-primary/10 text-primary border-0",
@@ -38,6 +39,7 @@ const Attendees = () => {
 
   const { data: registrations, isLoading } = useRegistrations();
   const { data: stats } = useRegistrationStats();
+  const deleteReg = useDeleteRegistration();
 
   const eventOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -114,6 +116,22 @@ const Attendees = () => {
     setEmailEvent({ id: r.event_id, name: r.events?.name || "Event" });
     setEmailModalTitle(`Send Email to ${name}`);
     setEmailModalOpen(true);
+  };
+
+  // Delete attendee
+  const handleDeleteAttendee = async (r: Registration, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const data = getRegData(r);
+    const student = extractStudentInfo(data);
+    const name = student.name || data["Full Name"] || data["Name"] || "this attendee";
+    if (!confirm(`Remove "${name}" from this event? This cannot be undone.`)) return;
+    try {
+      await deleteReg.mutateAsync(r.id);
+      toast.success(`${name} removed successfully`);
+      if (selectedRegistration?.id === r.id) setSelectedRegistration(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete attendee");
+    }
   };
 
   // Trigger email broadcast to filtered attendees
@@ -355,6 +373,16 @@ const Attendees = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
+                            title="Delete attendee"
+                            disabled={deleteReg.isPending}
+                            onClick={(e) => handleDeleteAttendee(r, e)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -489,20 +517,47 @@ const Attendees = () => {
                   </div>
                 </div>
 
+                {/* Phone number */}
+                {(() => {
+                  const phone = student.phone ||
+                    data["Phone Number"] || data["Phone"] || data["Mobile"] || data["Mobile Number"] || "";
+                  return phone ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground border-t border-border pt-3">
+                      <Phone className="w-3.5 h-3.5 shrink-0 text-primary" />
+                      <a href={`tel:${phone}`} className="hover:text-foreground transition-colors">{phone}</a>
+                    </div>
+                  ) : null;
+                })()}
+
                 {/* Trigger Email Button */}
-                <div className="border-t border-border pt-4 flex items-center justify-end">
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="rounded-full text-xs"
-                    onClick={() => {
-                      const r = selectedRegistration;
-                      setSelectedRegistration(null);
-                      handleOpenSingleEmail(r);
-                    }}
-                  >
-                    <Mail className="w-3.5 h-3.5 mr-1.5" /> Trigger Email to Attendee
-                  </Button>
+                <div className="border-t border-border pt-4 flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(selectedRegistration.created_at), "MMM d, yyyy 'at' h:mm a")}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      className="rounded-full text-xs"
+                      disabled={deleteReg.isPending}
+                      onClick={() => handleDeleteAttendee(selectedRegistration)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="rounded-full text-xs"
+                      onClick={() => {
+                        const r = selectedRegistration;
+                        setSelectedRegistration(null);
+                        handleOpenSingleEmail(r);
+                      }}
+                    >
+                      <Mail className="w-3.5 h-3.5 mr-1.5" /> Trigger Email
+                    </Button>
+                  </div>
                 </div>
               </div>
             );
