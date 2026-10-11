@@ -23,6 +23,8 @@ import Integrations from "./pages/dashboard/Integrations";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import NotFound from "./pages/NotFound";
 
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 const queryClient = new QueryClient();
 
 function ScrollToTop() {
@@ -34,9 +36,10 @@ function ScrollToTop() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="app-theme">
-      <AuthProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="app-theme">
+        <AuthProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -76,6 +79,7 @@ const App = () => (
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
+</ErrorBoundary>
 );
 
 export default App;

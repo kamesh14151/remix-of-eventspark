@@ -25,42 +25,54 @@ export type TeamMember = {
 
 // ─── Helper: format event date/time with timezone ───
 function formatEventDateTime(event: Event) {
-  const tz = event.timezone || "America/New_York";
-  const parts: string[] = [];
+  try {
+    const tz = event.timezone || "America/New_York";
+    const parts: string[] = [];
 
-  if (event.event_date) {
-    const start = new Date(event.event_date);
-    const dateStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: tz });
-    const timeStr = start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz });
+    if (event.event_date) {
+      const start = new Date(event.event_date);
+      if (isNaN(start.getTime())) return "";
 
-    let line = `${dateStr} · ${timeStr}`;
+      const dateStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: tz });
+      const timeStr = start.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz });
 
-    if (event.event_end_date) {
-      const end = new Date(event.event_end_date);
-      const endDateStr = end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: tz });
-      const endTimeStr = end.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz });
+      let line = `${dateStr} · ${timeStr}`;
 
-      if (endDateStr === dateStr) {
-        line += ` – ${endTimeStr}`;
-      } else {
-        line += ` – ${endDateStr} · ${endTimeStr}`;
+      if (event.event_end_date) {
+        const end = new Date(event.event_end_date);
+        if (!isNaN(end.getTime())) {
+          const endDateStr = end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: tz });
+          const endTimeStr = end.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz });
+
+          if (endDateStr === dateStr) {
+            line += ` – ${endTimeStr}`;
+          } else {
+            line += ` – ${endDateStr} · ${endTimeStr}`;
+          }
+        }
       }
+
+      try {
+        const tzAbbr = start.toLocaleTimeString("en-US", { timeZone: tz, timeZoneName: "short" }).split(" ").pop() || tz;
+        line += ` ${tzAbbr}`;
+      } catch {
+        line += ` ${tz}`;
+      }
+
+      parts.push(line);
     }
 
-    // Timezone abbreviation
-    const tzAbbr = start.toLocaleTimeString("en-US", { timeZone: tz, timeZoneName: "short" }).split(" ").pop() || tz;
-    line += ` ${tzAbbr}`;
-
-    parts.push(line);
+    return parts.join("");
+  } catch (err) {
+    console.warn("formatEventDateTime error:", err);
+    return event.event_date ? new Date(event.event_date).toLocaleDateString() : "";
   }
-
-  return parts.join("");
 }
 
 // ─── Extracted stable components ───
 
 const SuccessCard = ({ brandColor, event, teamMembers }: { brandColor: string; event: Event; teamMembers: TeamMember[] }) => (
-  <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg mx-auto">
+  <div key="success" className="w-full max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-300">
     <Card className="border-border shadow-2xl">
       <CardContent className="p-8 text-center">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
@@ -88,7 +100,7 @@ const SuccessCard = ({ brandColor, event, teamMembers }: { brandColor: string; e
         </div>
       </CardContent>
     </Card>
-  </motion.div>
+  </div>
 );
 
 const CompactLogo = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string | null; eventName: string; className?: string }) => (
@@ -367,14 +379,6 @@ const Register = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-
-  // If the user accessed the page via a truncated or prefix slug (e.g. "sonathon-2-o-vqt07" instead of "sonathon-2-o-vqt07j"),
-  // update the URL to the canonical slug seamlessly in the address bar without reloading
-  useEffect(() => {
-    if (event?.slug && slug && slug !== event.slug) {
-      window.history.replaceState(null, "", `/register/${event.slug}`);
-    }
-  }, [event?.slug, slug]);
 
   const handleFieldChange = useCallback((label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
@@ -696,7 +700,7 @@ const Register = () => {
       <div className="min-h-screen relative bg-background text-foreground">
         <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}15, ${brandColor}05)` }} />
         <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-lg">
+          <div className="w-full max-w-lg animate-in fade-in duration-300">
             <Card className="border-border shadow-2xl">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
@@ -712,7 +716,7 @@ const Register = () => {
                 <PoweredBy />
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </div>
     );
@@ -737,11 +741,11 @@ const Register = () => {
         </div>
         {/* Right: form */}
         <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-md">
+          <div className="w-full max-w-md animate-in fade-in duration-300">
             <EventInfo event={event} className="mb-8" />
             <RegistrationForm {...formProps} />
             <PoweredBy />
-          </motion.div>
+          </div>
         </div>
       </div>
     );
@@ -757,7 +761,7 @@ const Register = () => {
           {event.description && <p className="text-white/80 mt-2 max-w-lg mx-auto">{event.description}</p>}
         </div>
         <div className="max-w-lg mx-auto px-4 py-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="animate-in fade-in duration-300">
             <Card className="border-border shadow-2xl">
               <CardContent className="p-8">
                 <EventInfo event={event} className="mb-6" />
@@ -765,7 +769,7 @@ const Register = () => {
                 <PoweredBy />
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </div>
     );
@@ -796,7 +800,7 @@ const Register = () => {
           </div>
         </div>
         <div className="max-w-lg mx-auto px-4 py-12 -mt-8 relative z-20">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="animate-in fade-in duration-300">
             <Card className="border-border shadow-2xl">
               <CardContent className="p-8">
                 <h2 className="text-xl font-display font-bold mb-6 text-center">Register Now</h2>
@@ -804,7 +808,7 @@ const Register = () => {
                 <PoweredBy />
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </div>
     );
@@ -850,7 +854,7 @@ const Register = () => {
   // Fallback
   return wrapDark(
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background text-foreground" style={{ background: isDark ? undefined : `linear-gradient(135deg, ${brandColor}15, ${brandColor}05)` }}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-lg">
+      <div className="w-full max-w-lg animate-in fade-in duration-300">
         <Card className="border-border shadow-2xl">
           <CardContent className="p-8">
             <EventInfo event={event} className="text-center mb-8" />
@@ -858,9 +862,10 @@ const Register = () => {
             <PoweredBy />
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 };
 
 export default Register;
+
