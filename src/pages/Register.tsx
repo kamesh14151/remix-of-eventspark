@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users } from "lucide-react";
 import { useEventBySlug, Event } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
@@ -342,7 +342,7 @@ const Register = () => {
               venueDetails: event.location_value || "",
               eventDescription: event.description || "",
               hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
-              amount: finalData.razorpay_payment_id ? event.ticket_price ? Number(event.ticket_price) * 100 : 0 : undefined,
+              amount: finalData.razorpay_payment_id ? Number(finalData.razorpay_amount || 0) : undefined,
               paymentId: finalData.razorpay_payment_id,
               registrationId,
               ticketPrice: event.ticket_price || 0,
@@ -436,6 +436,7 @@ const Register = () => {
                   ...formData,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id,
+                  razorpay_amount: orderData.amount,
                   team_members: teamMembers.length > 0 ? teamMembers : undefined
                 });
               } else {
