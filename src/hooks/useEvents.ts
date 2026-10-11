@@ -10,15 +10,29 @@ export function useEvents(search?: string) {
   return useQuery({
     queryKey: ["events", user?.id, search],
     queryFn: async () => {
-      // Use RPC so the dashboard only returns events the user OWNS or is
-      // an invited member of — even though RLS now allows all authenticated
-      // users to see live events (required for /register/:slug to work).
-      const { data, error } = await supabase
-        .rpc("get_accessible_events", { p_search: search ?? null });
+      // Try RPC first for team member support
+      try {
+        const { data, error } = await supabase
+          .rpc("get_accessible_events", { p_search: search ?? null });
+        if (!error && Array.isArray(data)) return data as Event[];
+      } catch (err) {
+        console.warn("get_accessible_events RPC failed, falling back to direct query:", err);
+      }
+
+      // Resilient fallback: direct query scoped to user
+      let query = supabase.from("events").select("*");
+      if (user?.id) {
+        query = query.eq("user_id", user.id);
+      }
+      if (search) {
+        query = query.ilike("name", `%${search}%`);
+      }
+      const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Event[];
+      return (data || []) as Event[];
     },
     enabled: !!user,
+    retry: 1,
   });
 }
 
@@ -31,6 +45,7 @@ export function useEvent(id: string | undefined) {
       return data as Event;
     },
     enabled: !!id,
+    retry: 1,
   });
 }
 
@@ -49,7 +64,9 @@ export function useEventBySlug(slug: string | undefined) {
         .eq("status", "live")
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.warn("Exact slug query error:", error);
+      }
 
       // 2. Fallback: prefix match in case the URL had trailing chars truncated or missing
       // (e.g. user visited sonathon-2-o-vqt07 when database slug is sonathon-2-o-vqt07j)
@@ -72,17 +89,23 @@ export function useEventBySlug(slug: string | undefined) {
 
       let hostProfile = null;
       if (event.user_id) {
-        const { data: profileData } = await publicSupabase
-          .from("profiles")
-          .select("company, full_name")
-          .eq("id", event.user_id)
-          .maybeSingle();
-        hostProfile = profileData;
+        try {
+          const { data: profileData } = await publicSupabase
+            .from("profiles")
+            .select("company, full_name")
+            .eq("id", event.user_id)
+            .maybeSingle();
+          hostProfile = profileData;
+        } catch (e) {
+          console.warn("Host profile lookup error:", e);
+        }
       }
 
       return { ...event, profiles: hostProfile } as Event & { profiles?: { company: string | null; full_name: string | null } };
     },
     enabled: !!slug,
+    retry: 1,
+    staleTime: 1000 * 60 * 5,
   });
 }
 

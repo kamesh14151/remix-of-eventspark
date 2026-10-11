@@ -9,21 +9,32 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+function getSafeStorage() {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const testKey = '__sb_test__';
+    window.localStorage.setItem(testKey, '1');
+    window.localStorage.removeItem(testKey);
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
+}
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: brokeredPreviewStorage(),
+    storage: brokeredPreviewStorage() || getSafeStorage(),
     persistSession: true,
     autoRefreshToken: true,
   }
 });
 
-// A lightweight public client that uses plain localStorage — no brokered preview
-// session handshake. Use this for queries on public-facing pages (e.g. /register/:slug)
-// so the page renders immediately without waiting up to 2+ seconds for the auth bridge.
+// A lightweight public client with no session overhead or auth waiting.
+// Works reliably across all browsers, mobile in-app webviews, and QR scanners.
 export const publicSupabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
     persistSession: false,
     autoRefreshToken: false,
+    detectSessionInUrl: false,
   }
 });

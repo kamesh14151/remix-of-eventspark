@@ -33,17 +33,6 @@ function ScrollToTop() {
   return null;
 }
 
-// Clears React Query cache whenever the logged-in user changes.
-// Prevents stale data from a previous user's session leaking into a new one.
-function CacheClearer() {
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  useEffect(() => {
-    qc.clear();
-  }, [user?.id]);
-  return null;
-}
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="app-theme">
@@ -53,7 +42,6 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
-            <CacheClearer />
             <Routes>
               {/* ── Fully public routes — render immediately, no auth wait ── */}
               <Route path="/" element={<Landing />} />

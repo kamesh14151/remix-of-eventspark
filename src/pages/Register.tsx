@@ -380,25 +380,42 @@ const Register = () => {
     setFormData(prev => ({ ...prev, [label]: value }));
   }, []);
 
-  // Only show spinner while the EVENT itself is loading.
-  // Once we have (or know we don't have) the event, render immediately.
-  // Don't block on fieldsLoading — the form gracefully shows fallback fields.
-  if (eventLoading) {
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadTimedOut(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show spinner while the EVENT is loading, but never hang indefinitely
+  if (eventLoading && !loadTimedOut) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground animate-pulse">Loading event...</p>
       </div>
     );
   }
 
-  // Event not found or errored (e.g. draft/past event, wrong slug)
-  if (!event || eventError) {
+  // Event not found, errored, or timed out
+  if (!event || eventError || (eventLoading && loadTimedOut)) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
             <h1 className="text-2xl font-display font-bold mb-2">Event Not Found</h1>
-            <p className="text-muted-foreground">This event may have ended, is not yet published, or the link is invalid.</p>
+            <p className="text-muted-foreground mb-6">
+              This event may have ended, is not yet published, or the link is invalid.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+                Reload Page
+              </Button>
+              <Button asChild variant="ghost" className="w-full">
+                <a href="/">Go to Home</a>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
