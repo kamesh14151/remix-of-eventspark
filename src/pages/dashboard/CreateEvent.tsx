@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Check, Layout, Columns2, Monitor,
-  Loader2, Sparkles, MapPin, Video, Globe, Upload, X, PartyPopper, ExternalLink, Eye, Copy, Info
+  Loader2, Sparkles, MapPin, Video, Globe, Upload, X, PartyPopper, ExternalLink, Eye, Copy, Info, GraduationCap, Plus
 } from "lucide-react";
 import { useCreateEvent, useUpdateEvent, useEvent } from "@/hooks/useEvents";
 import TemplatePreview from "@/components/TemplatePreview";
@@ -19,6 +19,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import { studentHackathonFields, standardDefaultFields } from "@/lib/studentFields";
 
 const steps = [
   { number: 1, title: "Event Details", subtitle: "Name, date, location & description" },
@@ -38,12 +39,7 @@ const templates = [
   { id: "landing", name: "Landing Page", icon: Monitor, description: "Full-width hero image with form embedded below" },
 ];
 
-const defaultFields = [
-  { label: "Full Name", field_type: "text", required: true, position: 0 },
-  { label: "Email Address", field_type: "email", required: true, position: 1 },
-  { label: "Company", field_type: "text", required: false, position: 2 },
-  { label: "Job Title", field_type: "text", required: false, position: 3 },
-];
+const defaultFields = standardDefaultFields;
 
 const popularTimezones = [
   { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -100,8 +96,40 @@ const CreateEvent = () => {
   const [teamPricing, setTeamPricing] = useState("per_member");
   const [selectedTemplate, setSelectedTemplate] = useState("split");
   const [fields, setFields] = useState(defaultFields);
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newFieldType, setNewFieldType] = useState<"text" | "email" | "tel" | "url">("text");
   const [enhancing, setEnhancing] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  const handleEventTypeChange = (newType: string) => {
+    setEventType(newType);
+    if (newType === "hackathon") {
+      setFields(studentHackathonFields.map((f, i) => ({ label: f.label, field_type: f.field_type, required: f.required, position: i })));
+      toast.info("Applied Student Hackathon registration template (College, Department, Year...)");
+    } else if (eventType === "hackathon" && newType !== "hackathon") {
+      setFields(standardDefaultFields.map((f, i) => ({ label: f.label, field_type: f.field_type, required: f.required, position: i })));
+    }
+  };
+
+  const handleAddCustomField = () => {
+    if (!newFieldLabel.trim()) return;
+    setFields(prev => [...prev, {
+      label: newFieldLabel.trim(),
+      field_type: newFieldType,
+      required: false,
+      position: prev.length,
+    }]);
+    setNewFieldLabel("");
+    toast.success("Field added");
+  };
+
+  const handleRemoveField = (index: number) => {
+    setFields(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleToggleRequired = (index: number) => {
+    setFields(prev => prev.map((f, i) => i === index ? { ...f, required: !f.required } : f));
+  };
   const [flyerUrl, setFlyerUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [colorMode, setColorMode] = useState<"light" | "dark">("light");
@@ -458,13 +486,13 @@ const CreateEvent = () => {
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Event Type</Label>
-                      <Select value={eventType} onValueChange={setEventType}>
+                      <Select value={eventType} onValueChange={handleEventTypeChange}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="webinar">Webinar</SelectItem>
                           <SelectItem value="conference">Conference</SelectItem>
                           <SelectItem value="workshop">Workshop</SelectItem>
-                          <SelectItem value="hackathon">Hackathon</SelectItem>
+                          <SelectItem value="hackathon">🎓 Hackathon (Students)</SelectItem>
                           <SelectItem value="meetup">Meetup</SelectItem>
                           <SelectItem value="launch">Product Launch</SelectItem>
                         </SelectContent>
@@ -475,6 +503,15 @@ const CreateEvent = () => {
                       <Input value={profile?.company || ""} disabled className="bg-muted/50" placeholder="Set in Settings" />
                     </div>
                   </div>
+                  {eventType === "hackathon" && (
+                    <div className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary">
+                      <GraduationCap className="w-4 h-4 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-semibold block">Student Hackathon Mode Active</span>
+                        <span className="text-muted-foreground">The registration form will collect College/University, Department/Branch, Year of Study, and Student Roll Number.</span>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -866,25 +903,109 @@ const CreateEvent = () => {
             <div className="space-y-5">
               <Card>
                 <CardContent className="p-6 space-y-4">
-                  <div>
-                    <h3 className="font-display font-semibold text-base mb-0.5">Registration Form Fields</h3>
-                    <p className="text-xs text-muted-foreground">These are the fields attendees will fill out when they register. Required fields are marked.</p>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="font-display font-semibold text-base mb-0.5">Registration Form Fields</h3>
+                      <p className="text-xs text-muted-foreground">Fields attendees will complete when they register.</p>
+                    </div>
+
+                    {/* Presets */}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={`rounded-full text-xs ${eventType === "hackathon" ? "border-primary text-primary bg-primary/5" : ""}`}
+                        onClick={() => {
+                          setFields(studentHackathonFields.map((f, i) => ({ label: f.label, field_type: f.field_type, required: f.required, position: i })));
+                          toast.success("Applied Student Hackathon fields!");
+                        }}
+                      >
+                        <GraduationCap className="w-3.5 h-3.5 mr-1" /> Student Hackathon Template
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full text-xs"
+                        onClick={() => {
+                          setFields(standardDefaultFields.map((f, i) => ({ label: f.label, field_type: f.field_type, required: f.required, position: i })));
+                          toast.success("Applied Standard fields!");
+                        }}
+                      >
+                        💼 Standard Template
+                      </Button>
+                    </div>
                   </div>
-                  <div className="space-y-3">
+
+                  <div className="space-y-2.5">
                     {fields.map((field, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/30">
                         <div className="flex items-center gap-3">
-                          <div className="w-1.5 h-8 rounded-full bg-primary/40" />
+                          <div className="w-1.5 h-8 rounded-full bg-primary/50" />
                           <div>
                             <p className="text-sm font-medium">{field.label}</p>
                             <p className="text-xs text-muted-foreground capitalize">{field.field_type}</p>
                           </div>
                         </div>
-                        <Badge className={field.required ? "bg-primary text-primary-foreground text-xs" : "bg-muted text-muted-foreground border-0 text-xs"}>
-                          {field.required ? "Required" : "Optional"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={`cursor-pointer select-none transition-all ${
+                              field.required ? "bg-primary text-primary-foreground text-xs" : "bg-muted text-muted-foreground border border-border text-xs"
+                            }`}
+                            onClick={() => handleToggleRequired(i)}
+                            title="Click to toggle required/optional"
+                          >
+                            {field.required ? "Required" : "Optional"}
+                          </Badge>
+                          {i >= 2 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive rounded-full"
+                              onClick={() => handleRemoveField(i)}
+                              title="Remove field"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Add Custom Field */}
+                  <div className="border-t border-border pt-4 mt-2">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Add Another Field</Label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        placeholder="Field label (e.g. Discord Username, Portfolio)"
+                        value={newFieldLabel}
+                        onChange={e => setNewFieldLabel(e.target.value)}
+                        className="flex-1 rounded-full text-xs"
+                      />
+                      <Select value={newFieldType} onValueChange={(v: any) => setNewFieldType(v)}>
+                        <SelectTrigger className="w-full sm:w-28 rounded-full text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Text</SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
+                          <SelectItem value="tel">Phone</SelectItem>
+                          <SelectItem value="url">URL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full text-xs"
+                        onClick={handleAddCustomField}
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Add Field
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

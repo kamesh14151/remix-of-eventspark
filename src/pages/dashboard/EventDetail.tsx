@@ -4,9 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, Trash2, UserPlus, UserMinus, Users } from "lucide-react";
+import { Loader2, Trash2, UserPlus, UserMinus, Users, GraduationCap } from "lucide-react";
 import { useEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/useEvents";
-import { useFormFields, useAddFormField, useDeleteFormField } from "@/hooks/useFormFields";
+import { useFormFields, useAddFormField, useDeleteFormField, useBulkInsertFormFields } from "@/hooks/useFormFields";
 import { useEventMembers, useInviteMember, useRemoveMember } from "@/hooks/useEventMembers";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import EventDetailHeader from "@/components/event-detail/EventDetailHeader";
 import EventQuickInfo from "@/components/event-detail/EventQuickInfo";
 import EventAttendeesTable from "@/components/event-detail/EventAttendeesTable";
 import EventQRCode from "@/components/event-detail/EventQRCode";
+import { studentHackathonFields } from "@/lib/studentFields";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -29,6 +30,7 @@ const EventDetail = () => {
   const deleteEvent = useDeleteEvent();
   const addField = useAddFormField();
   const deleteField = useDeleteFormField();
+  const bulkInsertFields = useBulkInsertFormFields();
   const inviteMember = useInviteMember();
   const removeMember = useRemoveMember();
   const [newFieldLabel, setNewFieldLabel] = useState("");
@@ -59,6 +61,26 @@ const EventDetail = () => {
 
   const handleUpdate = async (fields: any) => {
     await updateEvent.mutateAsync({ id: event.id, ...fields });
+  };
+
+  const handleLoadStudentFields = async () => {
+    const existingLabels = new Set(formFields?.map(f => f.label.toLowerCase()) || []);
+    const toAdd = studentHackathonFields
+      .filter(f => !existingLabels.has(f.label.toLowerCase()))
+      .map((f, idx) => ({
+        event_id: event.id,
+        label: f.label,
+        field_type: f.field_type,
+        required: f.required,
+        position: (formFields?.length || 0) + idx,
+        placeholder: f.placeholder,
+      }));
+    if (toAdd.length === 0) {
+      toast.info("All student hackathon fields are already present!");
+      return;
+    }
+    await bulkInsertFields.mutateAsync(toAdd);
+    toast.success(`Added ${toAdd.length} student hackathon registration fields!`);
   };
 
   const handleAddField = async () => {
@@ -156,7 +178,23 @@ const EventDetail = () => {
         <TabsContent value="form" className="mt-5">
           <div className="grid lg:grid-cols-2 gap-5">
             <div className="bg-card rounded-xl p-5 sm:p-6 space-y-4">
-              <h3 className="font-display font-semibold">Form fields</h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="font-display font-semibold">Form fields</h3>
+                  <p className="text-xs text-muted-foreground">Fields attendees fill out when registering.</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full text-xs shrink-0"
+                  onClick={handleLoadStudentFields}
+                  disabled={bulkInsertFields.isPending}
+                >
+                  <GraduationCap className="w-3.5 h-3.5 mr-1.5 text-primary" />
+                  Load Student Hackathon Fields
+                </Button>
+              </div>
               {formFields?.map((field) => (
                 <div key={field.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/50">
                   <div>
@@ -334,7 +372,7 @@ const EventDetail = () => {
         </TabsContent>
       </Tabs>
 
-      <EventAttendeesTable eventId={event.id} />
+      <EventAttendeesTable eventId={event.id} event={event} />
     </div>
   );
 };

@@ -1,21 +1,27 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School } from "lucide-react";
 import { useEventBySlug, Event } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Tables } from "@/integrations/supabase/types";
+import { studentHackathonFields, yearOfStudyOptions, popularDepartments } from "@/lib/studentFields";
 
 type FormField = Tables<"form_fields">;
 
-export type TeamMember = { name: string; email: string };
+export type TeamMember = {
+  name: string;
+  email: string;
+  college?: string;
+  department?: string;
+};
 
 // ─── Helper: format event date/time with timezone ───
 function formatEventDateTime(event: Event) {
@@ -151,6 +157,7 @@ const RegistrationForm = ({
   teamMembers,
   onTeamMembersChange,
   maxTeamSize,
+  isHackathon = false,
 }: {
   formFields: FormField[] | undefined;
   formData: Record<string, string>;
@@ -164,10 +171,13 @@ const RegistrationForm = ({
   teamMembers?: TeamMember[];
   onTeamMembersChange?: (members: TeamMember[]) => void;
   maxTeamSize?: number;
+  isHackathon?: boolean;
 }) => {
   const addTeamMember = () => {
     if (onTeamMembersChange && teamMembers && maxTeamSize && teamMembers.length < maxTeamSize - 1) {
-      onTeamMembersChange([...teamMembers, { name: "", email: "" }]);
+      // Find lead's college if entered
+      const leadCollege = Object.entries(formData).find(([k]) => /college|university|clg/i.test(k))?.[1] || "";
+      onTeamMembersChange([...teamMembers, { name: "", email: "", college: leadCollege, department: "" }]);
     }
   };
 
@@ -187,70 +197,147 @@ const RegistrationForm = ({
 
   return (
     <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
-    {formFields?.map((field) => (
-      <div key={field.id} className="space-y-2">
-        <Label>{field.label}{field.required && " *"}</Label>
-        <Input
-          type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
-          placeholder={field.placeholder || field.label}
-          required={field.required}
-          value={formData[field.label] || ""}
-          onChange={e => onFieldChange(field.label, e.target.value)}
-        />
-      </div>
-    ))}
-    {maxTeamSize && maxTeamSize > 1 && teamMembers && onTeamMembersChange && (
-      <div className="pt-4 mt-4 border-t border-border">
-        <h3 className="font-semibold text-lg mb-4">Team Members</h3>
-        {teamMembers.length > 0 ? (
-          <div className="space-y-4 mb-4">
-            {teamMembers.map((member, idx) => (
-              <div key={idx} className="p-4 bg-muted/50 rounded-lg relative space-y-3 border border-border">
-                <div className="absolute top-3 right-3">
-                  <button type="button" onClick={() => removeTeamMember(idx)} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="pr-6 space-y-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Member {idx + 2} Name</Label>
-                    <Input required value={member.name} onChange={e => updateTeamMember(idx, "name", e.target.value)} placeholder="Full Name" className="h-9 text-sm" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Member {idx + 2} Email</Label>
-                    <Input required type="email" value={member.email} onChange={e => updateTeamMember(idx, "email", e.target.value)} placeholder="Email Address" className="h-9 text-sm" />
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Student Hackathon Banner */}
+      {isHackathon && (
+        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary mb-2">
+          <GraduationCap className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-semibold block text-sm">Student Hackathon Registration</span>
+            <span className="text-muted-foreground text-xs leading-relaxed block">
+              Please provide your college name, department, year of study, and academic details.
+            </span>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground mb-4">Registering as a team? Add your team members below.</p>
-        )}
-        
-        {teamMembers.length < maxTeamSize - 1 && (
-          <Button type="button" variant="outline" onClick={addTeamMember} className="w-full text-sm border-dashed">
-            <Plus className="w-4 h-4 mr-2" /> Add Team Member
-          </Button>
-        )}
-      </div>
-    )}
+        </div>
+      )}
 
-    <div className="flex items-start gap-2 pt-2">
-      <Checkbox id="gdpr" checked={consent} onCheckedChange={(c) => onConsentChange(!!c)} />
-      <Label htmlFor="gdpr" className="text-xs text-muted-foreground leading-relaxed">
-        I agree to receive communications about this event and consent to the processing of my data in accordance with the Privacy Policy.
-      </Label>
-    </div>
-    <Button
-      type="submit"
-      className="w-full h-11 text-base border-0 text-white"
-      style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}
-      disabled={isPending}
-    >
-      {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Registering…</> : "Register Now"}
-    </Button>
-  </form>
+      {/* Datalist for department suggestions */}
+      <datalist id="register-dept-suggestions">
+        {popularDepartments.map((dept) => (
+          <option key={dept} value={dept} />
+        ))}
+      </datalist>
+
+      {formFields?.map((field) => {
+        const isYearField = /year of study|academic year/i.test(field.label);
+        const isDeptField = /department|branch|stream/i.test(field.label);
+        const isCollegeField = /college|university|clg|institution/i.test(field.label);
+        const isRollNoField = /roll number|student id|roll no|reg no/i.test(field.label);
+        const isGithubField = /github|portfolio/i.test(field.label);
+
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              {isCollegeField && <School className="w-3.5 h-3.5 text-primary shrink-0" />}
+              {isYearField && <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" />}
+              <span>{field.label}</span>
+              {field.required && <span className="text-destructive">*</span>}
+            </Label>
+
+            {/* Quick-select pills for Year of Study */}
+            {isYearField && (
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {yearOfStudyOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => onFieldChange(field.label, opt)}
+                    className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                      formData[field.label] === opt
+                        ? "bg-primary text-primary-foreground border-primary font-medium shadow-sm"
+                        : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <Input
+              type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
+              placeholder={field.placeholder || field.label}
+              required={field.required}
+              list={isDeptField ? "register-dept-suggestions" : undefined}
+              value={formData[field.label] || ""}
+              onChange={e => onFieldChange(field.label, e.target.value)}
+              className="h-10 text-sm rounded-xl"
+            />
+          </div>
+        );
+      })}
+
+      {maxTeamSize && maxTeamSize > 1 && teamMembers && onTeamMembersChange && (
+        <div className="pt-4 mt-4 border-t border-border">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              Team Members
+            </h3>
+            <span className="text-xs text-muted-foreground">Up to {maxTeamSize} members</span>
+          </div>
+
+          {teamMembers.length > 0 ? (
+            <div className="space-y-4 mb-4">
+              {teamMembers.map((member, idx) => (
+                <div key={idx} className="p-4 bg-muted/40 rounded-xl relative space-y-3 border border-border">
+                  <div className="flex items-center justify-between pb-1 border-b border-border/50">
+                    <span className="text-xs font-semibold text-primary">Member {idx + 2}</span>
+                    <button type="button" onClick={() => removeTeamMember(idx)} className="text-muted-foreground hover:text-destructive text-xs flex items-center gap-1">
+                      <Trash2 className="w-3.5 h-3.5" /> Remove
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Full Name *</Label>
+                      <Input required value={member.name} onChange={e => updateTeamMember(idx, "name", e.target.value)} placeholder="Member Name" className="h-9 text-xs rounded-lg" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Email Address *</Label>
+                      <Input required type="email" value={member.email} onChange={e => updateTeamMember(idx, "email", e.target.value)} placeholder="member@college.edu" className="h-9 text-xs rounded-lg" />
+                    </div>
+                    {isHackathon && (
+                      <>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">College / University</Label>
+                          <Input value={member.college || ""} onChange={e => updateTeamMember(idx, "college", e.target.value)} placeholder="College Name" className="h-9 text-xs rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Department</Label>
+                          <Input list="register-dept-suggestions" value={member.department || ""} onChange={e => updateTeamMember(idx, "department", e.target.value)} placeholder="e.g. CSE" className="h-9 text-xs rounded-lg" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mb-4">Registering with team members? Add teammates below.</p>
+          )}
+
+          {teamMembers.length < maxTeamSize - 1 && (
+            <Button type="button" variant="outline" onClick={addTeamMember} className="w-full text-xs rounded-xl border-dashed">
+              <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Team Member
+            </Button>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-start gap-2 pt-2">
+        <Checkbox id="gdpr" checked={consent} onCheckedChange={(c) => onConsentChange(!!c)} />
+        <Label htmlFor="gdpr" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+          I agree to receive communications about this event and consent to the processing of my academic details in accordance with the Privacy Policy.
+        </Label>
+      </div>
+      <Button
+        type="submit"
+        className="w-full h-11 text-base border-0 text-white rounded-xl shadow-md font-semibold transition-all hover:opacity-95"
+        style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}
+        disabled={isPending}
+      >
+        {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Registering…</> : "Complete Registration"}
+      </Button>
+    </form>
   );
 };
 
@@ -306,54 +393,111 @@ const Register = () => {
     );
   }
 
-  // (moved up to fix rules of hooks)
+  const isHackathon = event?.event_type === "hackathon";
+
+  const effectiveFormFields = useMemo(() => {
+    if (!event) return formFields;
+    if (!isHackathon) return formFields;
+
+    if (!formFields || formFields.length <= 2) {
+      return studentHackathonFields.map((f, i) => ({
+        id: `student-field-${i}`,
+        event_id: event.id,
+        label: f.label,
+        field_type: f.field_type,
+        required: f.required,
+        position: i,
+        placeholder: f.placeholder || null,
+      })) as FormField[];
+    }
+
+    const hasCollege = formFields.some(f => /college|university|clg|institution/i.test(f.label));
+    const hasDept = formFields.some(f => /department|dept|branch/i.test(f.label));
+    const hasYear = formFields.some(f => /year of study|academic year/i.test(f.label));
+
+    if (!hasCollege || !hasDept || !hasYear) {
+      const extra: FormField[] = [];
+      if (!hasCollege) {
+        extra.push({
+          id: "student-college-injected",
+          event_id: event.id,
+          label: "College / University",
+          field_type: "text",
+          required: true,
+          position: formFields.length,
+          placeholder: "e.g. Stanford University / IIT Madras",
+        } as FormField);
+      }
+      if (!hasDept) {
+        extra.push({
+          id: "student-dept-injected",
+          event_id: event.id,
+          label: "Department / Branch",
+          field_type: "text",
+          required: true,
+          position: formFields.length + 1,
+          placeholder: "e.g. Computer Science, AI & DS, ECE",
+        } as FormField);
+      }
+      if (!hasYear) {
+        extra.push({
+          id: "student-year-injected",
+          event_id: event.id,
+          label: "Year of Study",
+          field_type: "text",
+          required: true,
+          position: formFields.length + 2,
+          placeholder: "e.g. 1st Year, 2nd Year, 3rd Year, 4th Year, Post Graduate",
+        } as FormField);
+      }
+      return [...formFields, ...extra];
+    }
+
+    return formFields;
+  }, [event, formFields, isHackathon]);
 
   const completeRegistration = async (finalData: any) => {
     try {
       const registrationId = await createReg.mutateAsync({ event_id: event.id, data: finalData });
       
       // Fire and forget email notification
-      const emailField = formFields?.find(f => f.field_type === "email")?.label || "Email";
+      const emailField = effectiveFormFields?.find(f => f.field_type === "email")?.label || "Email";
       const lowerLabel = (field: FormField) => field.label.toLowerCase().trim();
-      const fullNameField = formFields?.find(field => /^(full name|attendee name|name)$/.test(lowerLabel(field)));
-      const firstNameField = formFields?.find(field => /first name|^first$/.test(lowerLabel(field)));
-      const lastNameField = formFields?.find(field => /last name|surname|^last$/.test(lowerLabel(field)));
+      const fullNameField = effectiveFormFields?.find(field => /^(full name|attendee name|name)$/.test(lowerLabel(field)));
+      const firstNameField = effectiveFormFields?.find(field => /first name|^first$/.test(lowerLabel(field)));
+      const lastNameField = effectiveFormFields?.find(field => /last name|surname|^last$/.test(lowerLabel(field)));
       const email = (formData[emailField] || formData["email"] || formData["Email"] || Object.values(formData).find((value) => typeof value === "string" && value.includes("@")) || "").toString().trim();
       const firstAndLastName = [firstNameField && formData[firstNameField.label], lastNameField && formData[lastNameField.label]].filter(Boolean).join(" ").trim();
       const name = (fullNameField && formData[fullNameField.label] || firstAndLastName || formData["name"] || formData["Name"] || Object.values(formData).find((value) => typeof value === "string" && value.trim().length > 2 && !value.includes("@")) || "Attendee").toString().trim();
       
       if (email) {
-        if (!import.meta.env.DEV) {
-          fetch("/api/send-email", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              type: "registration",
-              email: email,
-              name,
-              eventTitle: event.name,
-              eventDate: formatEventDateTime(event),
-              eventEndDate: event.event_end_date ? new Date(event.event_end_date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: event.timezone || "America/New_York" }) : "",
-              eventTimezone: event.timezone || "",
-              eventType: event.event_type || "Event",
-              eventLocation: event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual",
-              venueDetails: event.location_value || "",
-              eventDescription: event.description || "",
-              hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
-              amount: finalData.razorpay_payment_id ? Number(finalData.razorpay_amount || 0) : undefined,
-              paymentId: finalData.razorpay_payment_id,
-              registrationId,
-              ticketPrice: event.ticket_price || 0,
-              teamPricing: event.team_pricing || "",
-              teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
-              flyerUrl: event.background_image_url
-            })
-          }).catch(e => console.error("Failed to send registration email:", e));
-        } else {
-          console.log("[DEV MODE] Skipped sending registration email to:", email);
-        }
+        fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "registration",
+            email: email,
+            name,
+            eventTitle: event.name,
+            eventDate: formatEventDateTime(event),
+            eventEndDate: event.event_end_date ? new Date(event.event_end_date).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: event.timezone || "America/New_York" }) : "",
+            eventTimezone: event.timezone || "",
+            eventType: event.event_type || "Event",
+            eventLocation: event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual",
+            venueDetails: event.location_value || "",
+            eventDescription: event.description || "",
+            hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
+            amount: finalData.razorpay_payment_id ? Number(finalData.razorpay_amount || 0) : undefined,
+            paymentId: finalData.razorpay_payment_id,
+            registrationId,
+            ticketPrice: event.ticket_price || 0,
+            teamPricing: event.team_pricing || "",
+            teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
+            flyerUrl: event.background_image_url
+          })
+        }).catch(e => console.error("Failed to send registration email:", e));
       }
 
       setSubmitted(true);
@@ -370,7 +514,7 @@ const Register = () => {
       toast.error("Please accept the privacy policy to register.");
       return;
     }
-    const missing = formFields?.filter(f => f.required && !formData[f.label]?.trim());
+    const missing = effectiveFormFields?.filter(f => f.required && !formData[f.label]?.trim());
     if (missing && missing.length > 0) {
       toast.error(`Please fill in: ${missing.map(f => f.label).join(", ")}`);
       return;
@@ -489,7 +633,7 @@ const Register = () => {
   const isDark = (event as any).color_mode === "dark";
 
   const formProps = {
-    formFields,
+    formFields: effectiveFormFields,
     formData,
     onFieldChange: handleFieldChange,
     consent,
@@ -500,6 +644,7 @@ const Register = () => {
     teamMembers,
     onTeamMembersChange: setTeamMembers,
     maxTeamSize: event.max_team_size || 1,
+    isHackathon,
   };
 
   const wrapDark = (content: React.ReactNode) => (

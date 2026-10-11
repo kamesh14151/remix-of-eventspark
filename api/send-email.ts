@@ -25,14 +25,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { type, email, name, loginTime, browser, eventTitle, hostName, teamMembers } = req.body;
+    const { type, email, emails, name, loginTime, browser, eventTitle, hostName, teamMembers, subject: customSubject, message, flyerUrl, eventDate, eventLocation, eventEndDate, eventTimezone } = req.body;
     const targetHostName = hostName || "EventSpark";
 
-    if (!email || !type) {
-      return res.status(400).json({ error: "Missing email or type" });
+    const recipientList: string[] = Array.isArray(emails) && emails.length > 0 
+      ? emails 
+      : Array.isArray(email) && email.length > 0 
+      ? email 
+      : email ? [email] : [];
+
+    if (recipientList.length === 0 || !type) {
+      return res.status(400).json({ error: "Missing recipient email(s) or type" });
     }
 
-    let subject = "";
+    let subject = customSubject || "";
     let htmlContent = "";
     const targetName = name || "there";
     const logoUrl = "https://events.ajstudioz.co.in/favicon.png"; 
@@ -66,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       </div>
     `;
 
-    let attachments = [];
+    let attachments: any[] = [];
 
     if (type === "signup") {
       subject = "Welcome to EventSpark!";
@@ -121,7 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   This is a routine security alert. Someone logged into your EventSpark account from a new IP address or device:
                 </p>
               </div>
-              <div style="margin: 24px 0;">
+              <div style="margin-24px 0;">
                 <p style="font-size: 16px; color: #000000; margin: 0 0 8px 0; line-height: 1.5;">
                   <strong>Time:</strong> ${loginTime || new Date().toLocaleString()}
                 </p>
@@ -139,9 +145,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </body>
         </html>
       `;
+    } else if (type === "announcement" || type === "custom" || type === "manual") {
+      subject = customSubject || `Important Update: ${eventTitle || "EventSpark"}`;
+      const formattedParagraphs = (message || "")
+        .split("\n\n")
+        .map((p: string) => `<p style="margin: 0 0 16px 0; line-height: 1.6;">${p.replace(/\n/g, "<br />")}</p>`)
+        .join("");
+
+      const topLogo = flyerUrl || logoUrl;
+      htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en" dir="ltr">
+          <body style="background-color: #f3f4f6; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin: 0; padding: 24px 12px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #E5E7EB; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+              ${flyerUrl ? `
+                <div style="width: 100%; max-height: 220px; overflow: hidden; background-color: #111827; text-align: center;">
+                  <img src="${flyerUrl}" alt="${eventTitle || 'Event'}" style="width: 100%; max-height: 220px; object-fit: cover; display: block;" />
+                </div>
+              ` : `
+                <div style="background: linear-gradient(135deg, #18181B 0%, #27272A 100%); padding: 32px 24px; text-align: center;">
+                  <img src="${logoUrl}" alt="EventSpark" width="48" height="48" style="border-radius: 10px; margin-bottom: 12px;" />
+                  <h2 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">${eventTitle || 'EventSpark'}</h2>
+                </div>
+              `}
+              <div style="padding: 32px;">
+                ${eventTitle ? `
+                  <div style="display: inline-block; background-color: #EEF2FF; color: #4F46E5; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 10px; border-radius: 9999px; margin-bottom: 12px;">
+                    ${eventTitle}
+                  </div>
+                ` : ''}
+                <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 16px 0; line-height: 1.3;">
+                  ${subject}
+                </h1>
+                <p style="font-size: 16px; color: #374151; margin: 0 0 16px 0;">
+                  Hi ${targetName},
+                </p>
+                <div style="font-size: 15px; color: #374151; margin-bottom: 24px;">
+                  ${formattedParagraphs || '<p>You have received an update from the event host.</p>'}
+                </div>
+
+                ${(eventDate || eventLocation) ? `
+                  <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin: 24px 0;">
+                    <p style="font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 0;">Event Information</p>
+                    ${eventDate ? `<p style="font-size: 14px; color: #1F2937; margin: 4px 0;">📅 <strong>Date:</strong> ${eventDate}</p>` : ''}
+                    ${eventLocation ? `<p style="font-size: 14px; color: #1F2937; margin: 4px 0;">📍 <strong>Location:</strong> ${eventLocation}</p>` : ''}
+                  </div>
+                ` : ''}
+
+                <div style="border-top: 1px solid #F3F4F6; padding-top: 16px; margin-top: 24px;">
+                  <p style="font-size: 14px; color: #6B7280; margin: 0;">
+                    Sent by <strong>${targetHostName}</strong>
+                  </p>
+                </div>
+                ${creditsHtml}
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
     } else if (type === "registration") {
-      subject = `You're registered for ${eventTitle || "the event"}!`;
-      const { flyerUrl, eventDate, eventLocation } = req.body;
+      subject = customSubject || `You're registered for ${eventTitle || "the event"}!`;
       const topLogo = flyerUrl || logoUrl;
       htmlContent = `
         <!DOCTYPE html>
@@ -164,6 +227,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0;">
                   You will receive more updates from the host soon.
                 </p>
+                ${eventDate ? `<p style="font-size: 15px; color: #374151; line-height: 24px; margin: 8px 0 0 0;">📅 <strong>Date:</strong> ${eventDate}</p>` : ''}
+                ${eventLocation ? `<p style="font-size: 15px; color: #374151; line-height: 24px; margin: 4px 0 0 0;">📍 <strong>Location:</strong> ${eventLocation}</p>` : ''}
                 ${teamMembers && teamMembers.length > 0 ? `
                   <div style="margin-top: 24px; padding: 16px; background-color: #F3F4F6; border-radius: 8px;">
                     <p style="font-size: 16px; font-weight: bold; color: #374151; margin: 0 0 12px;">Team Registration (${teamMembers.length + 1} members total)</p>
@@ -186,7 +251,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const page = pdfDoc.addPage([595, 842]);
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-        const sanitize = (str: string) => (str || "").replace(/[^\\x20-\\x7E]/g, "");
+        const sanitize = (str: string) => (str || "").replace(/[^\x20-\x7E]/g, "");
         
         let currentY = 842 - 50;
         const marginX = 50;
@@ -222,7 +287,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         currentY -= 15;
         page.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: marginX, y: currentY, size: 10, font });
-        page.drawText(sanitize(email), { x: marginX + 250, y: currentY, size: 10, font });
+        page.drawText(sanitize(recipientList[0] || ""), { x: marginX + 250, y: currentY, size: 10, font });
         
         currentY -= 40;
         page.drawLine({ start: { x: marginX, y: currentY }, end: { x: marginX + contentWidth, y: currentY }, thickness: 1, color: rgb(0.8, 0.8, 0.8) });
@@ -264,7 +329,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
         
         attachments.push({
-          filename: `Receipt_${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+          filename: `Receipt_${(eventTitle || "event").replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
           content: pdfBase64,
         });
       } catch (pdfErr) {
@@ -272,19 +337,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const { data, error } = await resend.emails.send({
-      from: "EventSpark <eventspark@ajstudioz.co.in>",
-      to: email,
-      subject: subject,
-      html: htmlContent,
-      attachments: attachments.length > 0 ? attachments : undefined,
-    });
+    const results = [];
+    for (const toEmail of recipientList) {
+      try {
+        const { data, error } = await resend.emails.send({
+          from: "EventSpark <eventspark@ajstudioz.co.in>",
+          to: toEmail,
+          subject: subject,
+          html: htmlContent,
+          attachments: attachments.length > 0 ? attachments : undefined,
+        });
 
-    if (error) {
-      return res.status(400).json(error);
+        if (error) {
+          console.error(`Resend error sending to ${toEmail}:`, error);
+          results.push({ email: toEmail, success: false, error });
+        } else {
+          results.push({ email: toEmail, success: true, data });
+        }
+      } catch (err: any) {
+        console.error(`Exception sending to ${toEmail}:`, err);
+        results.push({ email: toEmail, success: false, error: err.message });
+      }
     }
 
-    return res.status(200).json(data);
+    const successCount = results.filter(r => r.success).length;
+    return res.status(200).json({
+      success: successCount > 0,
+      total: recipientList.length,
+      sentCount: successCount,
+      results
+    });
   } catch (error: any) {
     console.error("Error sending email:", error);
     return res.status(500).json({ error: error.message });
