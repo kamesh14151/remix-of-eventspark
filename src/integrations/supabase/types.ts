@@ -75,6 +75,10 @@ export type Database = {
           timezone: string | null
           updated_at: string
           user_id: string
+          max_team_size: number | null
+          min_team_size: number | null
+          team_pricing: string | null
+          problem_statements: Json | null
         }
         Insert: {
           background_image_url?: string | null
@@ -101,6 +105,10 @@ export type Database = {
           timezone?: string | null
           updated_at?: string
           user_id: string
+          max_team_size?: number | null
+          min_team_size?: number | null
+          team_pricing?: string | null
+          problem_statements?: Json | null
         }
         Update: {
           background_image_url?: string | null
@@ -127,6 +135,10 @@ export type Database = {
           timezone?: string | null
           updated_at?: string
           user_id?: string
+          max_team_size?: number | null
+          min_team_size?: number | null
+          team_pricing?: string | null
+          problem_statements?: Json | null
         }
         Relationships: []
       }

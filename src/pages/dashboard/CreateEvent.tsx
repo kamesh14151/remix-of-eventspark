@@ -93,6 +93,7 @@ const CreateEvent = () => {
   const [requiresApproval, setRequiresApproval] = useState(false);
   const [capacity, setCapacity] = useState("");
   const [maxTeamSize, setMaxTeamSize] = useState("1");
+  const [minTeamSize, setMinTeamSize] = useState("1");
   const [teamPricing, setTeamPricing] = useState("per_member");
   const [selectedTemplate, setSelectedTemplate] = useState("split");
   const [fields, setFields] = useState(defaultFields);
@@ -154,6 +155,7 @@ const CreateEvent = () => {
       setRequiresApproval(existingEvent.requires_approval || false);
       setCapacity(existingEvent.capacity ? String(existingEvent.capacity) : "");
       setMaxTeamSize(existingEvent.max_team_size ? String(existingEvent.max_team_size) : "1");
+      setMinTeamSize((existingEvent as any).min_team_size ? String((existingEvent as any).min_team_size) : "1");
       setTeamPricing(existingEvent.team_pricing || "per_member");
 
       if (existingEvent.ticket_price && Number(existingEvent.ticket_price) > 0) {
@@ -276,6 +278,7 @@ const CreateEvent = () => {
         requires_approval: requiresApproval,
         capacity: capacity ? parseInt(capacity) : undefined,
         max_team_size: parseInt(maxTeamSize) || 1,
+        min_team_size: Math.min(parseInt(minTeamSize) || 1, parseInt(maxTeamSize) || 1),
         team_pricing: teamPricing,
         background_image_url: flyerUrl || undefined,
         color_mode: colorMode,
@@ -756,17 +759,34 @@ const CreateEvent = () => {
                     </div>
 
                     {parseInt(maxTeamSize) > 1 && (
-                      <div className="space-y-2">
-                        <Label>Team Pricing Model</Label>
-                        <select
-                          value={teamPricing}
-                          onChange={(e) => setTeamPricing(e.target.value)}
-                          className="w-full flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <option value="per_member">Per Member (Ticket Price × Number of Members)</option>
-                          <option value="flat_fee">Flat Fee (One Ticket Price for the whole team)</option>
-                        </select>
-                      </div>
+                      <>
+                        <div className="space-y-2">
+                          <Label>Minimum Required Team Size</Label>
+                          <Input 
+                            type="number" 
+                            min="1" 
+                            max={maxTeamSize}
+                            placeholder="e.g. 2 or 4" 
+                            value={minTeamSize} 
+                            onChange={e => setMinTeamSize(e.target.value)} 
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Set equal to Max Team Size to enforce a fixed team size.
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Team Pricing Model</Label>
+                          <select
+                            value={teamPricing}
+                            onChange={(e) => setTeamPricing(e.target.value)}
+                            className="w-full flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="per_member">Per Member (Ticket Price × Number of Members)</option>
+                            <option value="flat_fee">Flat Fee (One Ticket Price for the whole team)</option>
+                          </select>
+                        </div>
+                      </>
                     )}
                   </div>
                 </CardContent>

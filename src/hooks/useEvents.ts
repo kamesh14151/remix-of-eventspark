@@ -113,6 +113,15 @@ function generateSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Math.random().toString(36).substring(2, 8);
 }
 
+export interface ProblemStatement {
+  id: string;
+  code?: string;
+  title: string;
+  description: string;
+  category?: string;
+  published?: boolean;
+}
+
 export function useCreateEvent() {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -131,7 +140,9 @@ export function useCreateEvent() {
       requires_approval?: boolean;
       capacity?: number;
       max_team_size?: number;
+      min_team_size?: number;
       team_pricing?: string;
+      problem_statements?: ProblemStatement[] | any;
       status?: string;
     }) => {
       const slug = generateSlug(input.name);

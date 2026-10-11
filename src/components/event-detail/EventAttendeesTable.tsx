@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Phone, Github, Trash2 } from "lucide-react";
+import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Phone, Github, Trash2, Target } from "lucide-react";
 import { useRegistrationsByEvent, useDeleteRegistration } from "@/hooks/useRegistrations";
 import { useEvent } from "@/hooks/useEvents";
 import { format } from "date-fns";
@@ -250,6 +250,14 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
                       <TableCell>
                         <div className="space-y-0.5">
                           <p className="font-semibold text-sm text-foreground">{attendeeName}</p>
+                          {data["Problem Statement"] && (
+                            <div className="pt-0.5">
+                              <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 flex items-center gap-1 w-fit max-w-[220px] truncate">
+                                <Target className="w-2.5 h-2.5 shrink-0" />
+                                <span className="truncate">{data["Problem Statement"]}</span>
+                              </Badge>
+                            </div>
+                          )}
                           {student.isStudent && student.college ? (
                             <p className="text-xs text-muted-foreground flex items-center gap-1 md:hidden truncate">
                               <GraduationCap className="w-3 h-3 text-primary shrink-0" />
@@ -390,6 +398,24 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
 
             return (
               <div className="space-y-4 pt-2">
+                {/* Problem Statement Track if present */}
+                {(data["Problem Statement"] || data["selected_problem_statement_title"]) && (
+                  <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/25 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-primary font-semibold text-xs uppercase tracking-wider">
+                      <Target className="w-3.5 h-3.5" />
+                      Selected Problem Statement Track
+                    </div>
+                    <p className="font-semibold text-sm text-foreground">
+                      {data["Problem Statement"] || data["selected_problem_statement_title"]}
+                    </p>
+                    {data["problem_statement_category"] && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Domain: {data["problem_statement_category"]}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
                 {/* Academic / Student Section if student details exist */}
                 {student.isStudent && (
                   <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
@@ -464,15 +490,24 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
                     </h4>
                     <div className="space-y-2">
                       {teamMembers.map((m: any, idx: number) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-muted/40 text-xs flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-foreground">{m.name || `Member ${idx + 2}`}</p>
-                            <p className="text-muted-foreground text-[11px]">{m.email}</p>
+                        <div key={idx} className="p-2.5 rounded-lg bg-muted/40 text-xs flex justify-between items-center gap-2">
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground truncate">{m.name || `Member ${idx + 2}`}</p>
+                            <p className="text-muted-foreground text-[11px] truncate">{m.email}</p>
                           </div>
-                          {m.college && (
-                            <Badge variant="outline" className="text-[10px]">
-                              {m.college}
-                            </Badge>
+                          {(m.college || m.department) && (
+                            <div className="text-right shrink-0 space-y-0.5">
+                              {m.college && (
+                                <Badge variant="outline" className="text-[10px] block max-w-[180px] truncate">
+                                  {m.college}
+                                </Badge>
+                              )}
+                              {m.department && (
+                                <span className="text-[10px] text-muted-foreground block truncate">
+                                  {m.department}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))}

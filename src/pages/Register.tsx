@@ -5,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy } from "lucide-react";
-import { useEventBySlug, Event } from "@/hooks/useEvents";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy, Target, Sparkles } from "lucide-react";
+import { useEventBySlug, Event, ProblemStatement } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
@@ -72,7 +72,17 @@ function formatEventDateTime(event: Event) {
 
 // ─── Extracted stable components ───
 
-const SuccessCard = ({ brandColor, event, teamMembers }: { brandColor: string; event: Event; teamMembers: TeamMember[] }) => (
+const SuccessCard = ({
+  brandColor,
+  event,
+  teamMembers,
+  selectedProblemStatement,
+}: {
+  brandColor: string;
+  event: Event;
+  teamMembers: TeamMember[];
+  selectedProblemStatement?: ProblemStatement | null;
+}) => (
   <div key="success" className="w-full max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-300">
     <Card className="border-border shadow-2xl">
       <CardContent className="p-8 text-center">
@@ -82,6 +92,20 @@ const SuccessCard = ({ brandColor, event, teamMembers }: { brandColor: string; e
         <h2 className="text-2xl font-display font-bold mb-2">You're Registered!</h2>
         <p className="text-muted-foreground">Thank you for registering for <strong>{event.name}</strong>. You'll receive a confirmation email shortly.</p>
         <div className="mt-6 border-t border-border pt-5 text-left space-y-4">
+          {selectedProblemStatement && (
+            <div className="flex items-start gap-3 text-sm p-3.5 rounded-xl bg-primary/10 border border-primary/20">
+              <Target className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="font-semibold text-primary text-xs uppercase tracking-wider">Problem Statement Track</p>
+                <p className="font-medium text-foreground mt-0.5">
+                  {selectedProblemStatement.code ? `${selectedProblemStatement.code} · ` : ""}{selectedProblemStatement.title}
+                </p>
+                {selectedProblemStatement.category && (
+                  <p className="text-xs text-muted-foreground mt-0.5">Domain: {selectedProblemStatement.category}</p>
+                )}
+              </div>
+            </div>
+          )}
           {formatEventDateTime(event) && (
             <div className="flex items-start gap-3 text-sm">
               <CalendarDays className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
@@ -95,7 +119,16 @@ const SuccessCard = ({ brandColor, event, teamMembers }: { brandColor: string; e
           {teamMembers.length > 0 && (
             <div className="flex items-start gap-3 text-sm">
               <Users className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-              <div className="min-w-0"><p className="font-medium">Team members ({teamMembers.length})</p><ul className="mt-1 space-y-1 text-muted-foreground">{teamMembers.map((member, index) => <li key={`${member.email}-${index}`} className="break-words">{member.name} · {member.email}</li>)}</ul></div>
+              <div className="min-w-0">
+                <p className="font-medium">Team members ({teamMembers.length})</p>
+                <ul className="mt-1 space-y-1 text-muted-foreground">
+                  {teamMembers.map((member, index) => (
+                    <li key={`${member.email}-${index}`} className="break-words">
+                      {member.name} ({member.email}){member.college ? ` · ${member.college}` : ""}{member.department ? ` (${member.department})` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
         </div>
@@ -112,11 +145,99 @@ const CompactLogo = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string
   ) : null
 );
 
-const EventInfo = ({ event, className = "" }: { event: Event; className?: string }) => {
+const ProblemStatementsShowcase = ({
+  statements,
+  selectedId,
+  onSelect,
+}: {
+  statements: ProblemStatement[];
+  selectedId?: string;
+  onSelect?: (ps: ProblemStatement) => void;
+}) => {
+  const published = statements.filter((s) => s.published !== false);
+  if (published.length === 0) return null;
+
+  return (
+    <div className="mt-6 pt-5 border-t border-border/60 space-y-3 animate-in fade-in duration-300">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary shrink-0" />
+          <h3 className="font-display font-semibold text-sm sm:text-base text-foreground">
+            Hackathon Problem Statements
+          </h3>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            {published.length} Tracks
+          </span>
+        </div>
+        <span className="text-[11px] text-muted-foreground hidden sm:inline">
+          Tap card to select for registration
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        {published.map((ps, idx) => {
+          const isSelected = selectedId === ps.id;
+          return (
+            <div
+              key={ps.id || idx}
+              onClick={() => onSelect?.(ps)}
+              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative group ${
+                isSelected
+                  ? "bg-primary/10 border-primary ring-2 ring-primary/30 shadow-sm"
+                  : "bg-muted/40 hover:bg-muted/70 border-border"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded font-semibold bg-primary text-primary-foreground">
+                    {ps.code || `PS0${idx + 1}`}
+                  </span>
+                  {ps.category && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                      {ps.category}
+                    </span>
+                  )}
+                </div>
+                {isSelected && (
+                  <span className="text-[10px] font-medium text-primary flex items-center gap-1 bg-primary/15 px-1.5 py-0.5 rounded">
+                    <CheckCircle2 className="w-2.5 h-2.5" /> Selected
+                  </span>
+                )}
+              </div>
+
+              <h4 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors leading-snug">
+                {ps.title}
+              </h4>
+              <p className="text-[11px] text-muted-foreground mt-1 line-clamp-3 leading-relaxed">
+                {ps.description}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const EventInfo = ({
+  event,
+  className = "",
+  selectedProblemStatementId,
+  onSelectProblemStatement,
+}: {
+  event: Event;
+  className?: string;
+  selectedProblemStatementId?: string;
+  onSelectProblemStatement?: (ps: ProblemStatement) => void;
+}) => {
   const [expanded, setExpanded] = useState(false);
   const locationIcon = event.location_type === "physical" ? <MapPin className="w-4 h-4" /> : event.location_type === "hybrid" ? <Globe className="w-4 h-4" /> : <Video className="w-4 h-4" />;
   const locationLabel = event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual";
   const dateTimeStr = formatEventDateTime(event);
+
+  const problemStatements: ProblemStatement[] = Array.isArray((event as any)?.problem_statements)
+    ? (event as any).problem_statements
+    : [];
 
   // Truncate to first 2 sentences
   const description = event.description || "";
@@ -153,6 +274,15 @@ const EventInfo = ({ event, className = "" }: { event: Event; className?: string
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {locationIcon} {locationLabel}
       </div>
+
+      {/* Problem statements showcase tiles under hackathon name */}
+      {problemStatements.length > 0 && (
+        <ProblemStatementsShowcase
+          statements={problemStatements}
+          selectedId={selectedProblemStatementId}
+          onSelect={onSelectProblemStatement}
+        />
+      )}
     </div>
   );
 };
@@ -170,7 +300,11 @@ const RegistrationForm = ({
   teamMembers,
   onTeamMembersChange,
   maxTeamSize,
+  minTeamSize = 1,
   isHackathon = false,
+  problemStatements = [],
+  selectedProblemStatement,
+  onSelectProblemStatement,
 }: {
   formFields: FormField[] | undefined;
   formData: Record<string, string>;
@@ -184,7 +318,11 @@ const RegistrationForm = ({
   teamMembers?: TeamMember[];
   onTeamMembersChange?: (members: TeamMember[]) => void;
   maxTeamSize?: number;
+  minTeamSize?: number;
   isHackathon?: boolean;
+  problemStatements?: ProblemStatement[];
+  selectedProblemStatement?: ProblemStatement | null;
+  onSelectProblemStatement?: (ps: ProblemStatement) => void;
 }) => {
   const leadCollege = Object.entries(formData).find(([k]) => /college|university|clg|institution/i.test(k))?.[1] || "";
   const leadDept = Object.entries(formData).find(([k]) => /department|dept|branch|stream/i.test(k))?.[1] || "";
@@ -241,6 +379,52 @@ const RegistrationForm = ({
               Please provide your college name, department, year of study, and academic details.
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Problem Statement Track Selector */}
+      {problemStatements && problemStatements.length > 0 && (
+        <div className="space-y-2 p-3.5 rounded-xl bg-primary/5 border border-primary/20">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
+              <Target className="w-3.5 h-3.5 text-primary" /> Choose Problem Statement Track <span className="text-destructive">*</span>
+            </Label>
+            <span className="text-[10px] text-muted-foreground font-mono">{problemStatements.length} Tracks Available</span>
+          </div>
+          <select
+            value={selectedProblemStatement?.id || ""}
+            onChange={(e) => {
+              const found = problemStatements.find((p) => p.id === e.target.value);
+              if (found && onSelectProblemStatement) {
+                onSelectProblemStatement(found);
+              }
+            }}
+            className="h-10 text-sm rounded-xl w-full border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer"
+            required
+          >
+            <option value="" disabled>-- Select Your Problem Statement Track --</option>
+            {problemStatements.map((ps, i) => (
+              <option key={ps.id || i} value={ps.id}>
+                {ps.code || `PS0${i + 1}`}: {ps.title} {ps.category ? `(${ps.category})` : ""}
+              </option>
+            ))}
+          </select>
+
+          {selectedProblemStatement && (
+            <div className="p-2.5 rounded-lg bg-background/80 border border-primary/20 text-xs space-y-1 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground font-semibold">
+                  {selectedProblemStatement.code || "PS"}
+                </span>
+                <span className="font-semibold text-foreground truncate">
+                  {selectedProblemStatement.title}
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                {selectedProblemStatement.description}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -312,12 +496,18 @@ const RegistrationForm = ({
 
       {maxTeamSize && maxTeamSize > 1 && teamMembers && onTeamMembersChange && (
         <div className="pt-4 mt-4 border-t border-border">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
-              Team Members
+              Team Members ({teamMembers.length + 1} of {maxTeamSize})
             </h3>
-            <span className="text-xs text-muted-foreground">Up to {maxTeamSize} members</span>
+            <span className="text-xs text-muted-foreground font-medium">
+              {minTeamSize && minTeamSize === maxTeamSize
+                ? `Fixed: Exactly ${maxTeamSize} members required`
+                : minTeamSize && minTeamSize > 1
+                ? `Min ${minTeamSize}, Max ${maxTeamSize} members`
+                : `Up to ${maxTeamSize} members`}
+            </span>
           </div>
 
           {teamMembers.length > 0 ? (
@@ -438,6 +628,24 @@ const Register = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
+  const [selectedProblemStatement, setSelectedProblemStatement] = useState<ProblemStatement | null>(null);
+
+  const problemStatements: ProblemStatement[] = useMemo(() => {
+    return Array.isArray((event as any)?.problem_statements)
+      ? (event as any).problem_statements
+      : [];
+  }, [event]);
+
+  const publishedProblemStatements = useMemo(() => {
+    return problemStatements.filter(s => s.published !== false);
+  }, [problemStatements]);
+
+  useEffect(() => {
+    if (publishedProblemStatements.length > 0 && !selectedProblemStatement) {
+      setSelectedProblemStatement(publishedProblemStatements[0]);
+    }
+  }, [publishedProblemStatements, selectedProblemStatement]);
+
   const handleFieldChange = useCallback((label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
   }, []);
@@ -549,7 +757,18 @@ const Register = () => {
 
   const completeRegistration = async (finalData: any) => {
     try {
-      const registrationId = await createReg.mutateAsync({ event_id: event.id, data: finalData });
+      const payload = {
+        ...finalData,
+        ...(selectedProblemStatement ? {
+          "Problem Statement": `${selectedProblemStatement.code ? selectedProblemStatement.code + " - " : ""}${selectedProblemStatement.title}`,
+          problem_statement_id: selectedProblemStatement.id,
+          problem_statement_code: selectedProblemStatement.code,
+          problem_statement_title: selectedProblemStatement.title,
+          problem_statement_category: selectedProblemStatement.category,
+        } : {}),
+      };
+
+      const registrationId = await createReg.mutateAsync({ event_id: event.id, data: payload });
       
       // Fire and forget email notification
       const emailField = effectiveFormFields?.find(f => f.field_type === "email")?.label || "Email";
@@ -605,6 +824,27 @@ const Register = () => {
       toast.error("Please accept the privacy policy to register.");
       return;
     }
+
+    if (publishedProblemStatements.length > 0 && !selectedProblemStatement) {
+      toast.error("Please select a problem statement track for your registration.");
+      return;
+    }
+
+    const minTeamSize = (event as any)?.min_team_size || 1;
+    const maxTeamSize = event?.max_team_size || 1;
+
+    if (maxTeamSize > 1 && minTeamSize > 1 && teamMembers.length + 1 < minTeamSize) {
+      toast.error(`This hackathon requires a team of at least ${minTeamSize} members. Please add ${minTeamSize - 1 - teamMembers.length} more teammate(s).`);
+      return;
+    }
+
+    for (let i = 0; i < teamMembers.length; i++) {
+      if (!teamMembers[i].name.trim() || !teamMembers[i].email.trim()) {
+        toast.error(`Please provide name and email for Member ${i + 2}`);
+        return;
+      }
+    }
+
     const missing = effectiveFormFields?.filter(f => f.required && !formData[f.label]?.trim());
     if (missing && missing.length > 0) {
       toast.error(`Please fill in: ${missing.map(f => f.label).join(", ")}`);
@@ -735,7 +975,11 @@ const Register = () => {
     teamMembers,
     onTeamMembersChange: setTeamMembers,
     maxTeamSize: event.max_team_size || 1,
+    minTeamSize: (event as any).min_team_size || 1,
     isHackathon,
+    problemStatements: publishedProblemStatements,
+    selectedProblemStatement,
+    onSelectProblemStatement: setSelectedProblemStatement,
   };
 
   const wrapDark = (content: React.ReactNode) => (
@@ -747,7 +991,7 @@ const Register = () => {
   if (submitted) {
     return wrapDark(
       <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-background text-foreground" style={{ background: isDark ? undefined : `linear-gradient(135deg, ${brandColor}15, ${brandColor}05)` }}>
-        <SuccessCard brandColor={brandColor} event={event} teamMembers={teamMembers} />
+        <SuccessCard brandColor={brandColor} event={event} teamMembers={teamMembers} selectedProblemStatement={selectedProblemStatement} />
       </div>
     );
   }
@@ -768,7 +1012,11 @@ const Register = () => {
                       <Zap className="w-6 h-6 text-white" />
                     </div>
                   )}
-                  <EventInfo event={event} />
+                  <EventInfo
+                    event={event}
+                    selectedProblemStatementId={selectedProblemStatement?.id}
+                    onSelectProblemStatement={setSelectedProblemStatement}
+                  />
                 </div>
                 <RegistrationForm {...formProps} />
                 <PoweredBy />
@@ -800,7 +1048,12 @@ const Register = () => {
         {/* Right: form */}
         <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
           <div className="w-full max-w-md animate-in fade-in duration-300">
-            <EventInfo event={event} className="mb-8" />
+            <EventInfo
+              event={event}
+              className="mb-8"
+              selectedProblemStatementId={selectedProblemStatement?.id}
+              onSelectProblemStatement={setSelectedProblemStatement}
+            />
             <RegistrationForm {...formProps} />
             <PoweredBy />
           </div>
@@ -822,7 +1075,12 @@ const Register = () => {
           <div className="animate-in fade-in duration-300">
             <Card className="border-border shadow-2xl">
               <CardContent className="p-8">
-                <EventInfo event={event} className="mb-6" />
+                <EventInfo
+                  event={event}
+                  className="mb-6"
+                  selectedProblemStatementId={selectedProblemStatement?.id}
+                  onSelectProblemStatement={setSelectedProblemStatement}
+                />
                 <RegistrationForm {...formProps} />
                 <PoweredBy />
               </CardContent>
@@ -861,7 +1119,12 @@ const Register = () => {
           <div className="animate-in fade-in duration-300">
             <Card className="border-border shadow-2xl">
               <CardContent className="p-8">
-                <h2 className="text-xl font-display font-bold mb-6 text-center">Register Now</h2>
+                <EventInfo
+                  event={event}
+                  className="mb-6"
+                  selectedProblemStatementId={selectedProblemStatement?.id}
+                  onSelectProblemStatement={setSelectedProblemStatement}
+                />
                 <RegistrationForm {...formProps} />
                 <PoweredBy />
               </CardContent>
@@ -881,7 +1144,11 @@ const Register = () => {
             <div className="mb-6 flex justify-center">
               <CompactLogo flyerUrl={flyerUrl} eventName={event.name} />
             </div>
-            <EventInfo event={event} />
+            <EventInfo
+              event={event}
+              selectedProblemStatementId={selectedProblemStatement?.id}
+              onSelectProblemStatement={setSelectedProblemStatement}
+            />
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="border-border">
@@ -915,7 +1182,12 @@ const Register = () => {
       <div className="w-full max-w-lg animate-in fade-in duration-300">
         <Card className="border-border shadow-2xl">
           <CardContent className="p-8">
-            <EventInfo event={event} className="text-center mb-8" />
+            <EventInfo
+              event={event}
+              className="text-center mb-8"
+              selectedProblemStatementId={selectedProblemStatement?.id}
+              onSelectProblemStatement={setSelectedProblemStatement}
+            />
             <RegistrationForm {...formProps} />
             <PoweredBy />
           </CardContent>

@@ -4,13 +4,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, Trash2, UserPlus, UserMinus, Users, GraduationCap } from "lucide-react";
+import { Loader2, Trash2, UserPlus, UserMinus, Users, GraduationCap, Target, Save, Sparkles } from "lucide-react";
 import { useEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/useEvents";
 import { useFormFields, useAddFormField, useDeleteFormField, useBulkInsertFormFields } from "@/hooks/useFormFields";
 import { useEventMembers, useInviteMember, useRemoveMember } from "@/hooks/useEventMembers";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TemplatePreview from "@/components/TemplatePreview";
 import EventDetailHeader from "@/components/event-detail/EventDetailHeader";
@@ -18,6 +18,7 @@ import EventQuickInfo from "@/components/event-detail/EventQuickInfo";
 import EventAttendeesTable from "@/components/event-detail/EventAttendeesTable";
 import EventQRCode from "@/components/event-detail/EventQRCode";
 import { studentHackathonFields } from "@/lib/studentFields";
+import ProblemStatementsManager from "@/components/event-detail/ProblemStatementsManager";
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -36,6 +37,18 @@ const EventDetail = () => {
   const [newFieldLabel, setNewFieldLabel] = useState("");
   const [newFieldType, setNewFieldType] = useState("text");
   const [inviteEmail, setInviteEmail] = useState("");
+
+  const [maxTeamSize, setMaxTeamSize] = useState<string>("1");
+  const [minTeamSize, setMinTeamSize] = useState<string>("1");
+  const [teamPricing, setTeamPricing] = useState<string>("per_member");
+
+  useEffect(() => {
+    if (event) {
+      setMaxTeamSize(event.max_team_size ? String(event.max_team_size) : "1");
+      setMinTeamSize((event as any).min_team_size ? String((event as any).min_team_size) : "1");
+      setTeamPricing(event.team_pricing || "per_member");
+    }
+  }, [event]);
 
   const isOwner = event?.user_id === user?.id;
 
@@ -96,6 +109,17 @@ const EventDetail = () => {
     toast.success("Field added");
   };
 
+  const handleSaveTeamSettings = async () => {
+    const maxVal = parseInt(maxTeamSize) || 1;
+    const minVal = Math.min(parseInt(minTeamSize) || 1, maxVal);
+    await handleUpdate({
+      max_team_size: maxVal,
+      min_team_size: minVal,
+      team_pricing: teamPricing,
+    });
+    toast.success("Team size settings updated!");
+  };
+
   return (
     <div className="space-y-6">
       <EventDetailHeader event={event} onStatusChange={handleStatusChange} onDelete={handleDelete} />
@@ -105,7 +129,10 @@ const EventDetail = () => {
         <TabsList className="bg-muted rounded-full p-1 w-full sm:w-auto">
           <TabsTrigger value="branding" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Branding</TabsTrigger>
           <TabsTrigger value="form" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Reg. form</TabsTrigger>
-          <TabsTrigger value="team" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Team</TabsTrigger>
+          <TabsTrigger value="hackathon" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm flex items-center gap-1">
+            <Target className="w-3.5 h-3.5 text-primary" /> Hackathon & Team
+          </TabsTrigger>
+          <TabsTrigger value="team" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Co-hosts</TabsTrigger>
           <TabsTrigger value="settings" className="flex-1 sm:flex-initial rounded-full data-[state=active]:bg-card data-[state=active]:shadow-sm">Settings</TabsTrigger>
         </TabsList>
 
@@ -238,6 +265,95 @@ const EventDetail = () => {
               </div>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="hackathon" className="mt-5 space-y-5">
+          {/* Team Registration & Size Card */}
+          <div className="bg-card rounded-xl p-5 sm:p-6 space-y-4 border border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-display font-semibold flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" /> Attendee Team Size Configuration
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Set whether attendees can register as a team and fix the exact or maximum team size.
+                </p>
+              </div>
+              <Badge variant={parseInt(maxTeamSize) > 1 ? "default" : "secondary"} className="text-xs w-fit">
+                {parseInt(maxTeamSize) > 1
+                  ? parseInt(minTeamSize) === parseInt(maxTeamSize)
+                    ? `Fixed: Exactly ${maxTeamSize} Members`
+                    : `Team: ${minTeamSize} to ${maxTeamSize} Members`
+                  : "Solo Only (1 Person)"}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Maximum Team Size</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="20"
+                  value={maxTeamSize}
+                  onChange={(e) => setMaxTeamSize(e.target.value)}
+                  placeholder="e.g. 4 for a team of 4"
+                  className="rounded-xl"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Set to 1 for solo registration. Set to 2, 3, 4, etc. for team registration.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Minimum Required Team Size</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max={maxTeamSize}
+                  value={minTeamSize}
+                  onChange={(e) => setMinTeamSize(e.target.value)}
+                  placeholder="e.g. 2 or 4"
+                  className="rounded-xl"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  If set equal to Max, teams must register with exactly this fixed size.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Team Pricing Model</Label>
+                <Select value={teamPricing} onValueChange={setTeamPricing}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="per_member">Per Member (Ticket Price × Members)</SelectItem>
+                    <SelectItem value="flat_fee">Flat Fee (One Ticket for Whole Team)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  Used if your event has a paid ticket price.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSaveTeamSettings}
+                className="rounded-full text-xs font-medium"
+                disabled={updateEvent.isPending}
+              >
+                {updateEvent.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+                Save Team Size Settings
+              </Button>
+            </div>
+          </div>
+
+          {/* Problem Statements Manager */}
+          <ProblemStatementsManager event={event} onUpdate={handleUpdate} />
         </TabsContent>
 
         <TabsContent value="team" className="mt-5">
