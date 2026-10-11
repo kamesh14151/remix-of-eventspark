@@ -392,40 +392,6 @@ const Register = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Show spinner while the EVENT is loading, but never hang indefinitely
-  if (eventLoading && !loadTimedOut) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground animate-pulse">Loading event...</p>
-      </div>
-    );
-  }
-
-  // Event not found, errored, or timed out
-  if (!event || eventError || (eventLoading && loadTimedOut)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
-            <h1 className="text-2xl font-display font-bold mb-2">Event Not Found</h1>
-            <p className="text-muted-foreground mb-6">
-              This event may have ended, is not yet published, or the link is invalid.
-            </p>
-            <div className="flex flex-col gap-2">
-              <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
-                Reload Page
-              </Button>
-              <Button asChild variant="ghost" className="w-full">
-                <a href="/">Go to Home</a>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const isHackathon = event?.event_type === "hackathon";
 
   const effectiveFormFields = useMemo(() => {
@@ -488,6 +454,40 @@ const Register = () => {
 
     return formFields;
   }, [event, formFields, isHackathon]);
+
+  // Show spinner while the EVENT is loading, but never hang indefinitely
+  if (eventLoading && !loadTimedOut) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground animate-pulse">Loading event...</p>
+      </div>
+    );
+  }
+
+  // Event not found, errored, or timed out
+  if (!event || eventError || (eventLoading && loadTimedOut)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <h1 className="text-2xl font-display font-bold mb-2">Event Not Found</h1>
+            <p className="text-muted-foreground mb-6">
+              This event may have ended, is not yet published, or the link is invalid.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+                Reload Page
+              </Button>
+              <Button asChild variant="ghost" className="w-full">
+                <a href="/">Go to Home</a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const completeRegistration = async (finalData: any) => {
     try {
