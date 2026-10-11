@@ -1,0 +1,2 @@
+- [ ] Build per-user Zoom OAuth connection and meeting/attendee registration sync (waiting: user must provide Zoom OAuth app credentials after setup requirements are confirmed).
+- [ ] Improve event registration receipt/invoice details using accurate event, venue, and team member information.
