@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, publicSupabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert } from "@/integrations/supabase/types";
 
 export type FormField = Tables<"form_fields">;
@@ -8,7 +8,7 @@ export function useFormFields(eventId: string | undefined) {
   return useQuery({
     queryKey: ["form_fields", eventId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from("form_fields")
         .select("*")
         .eq("event_id", eventId!)

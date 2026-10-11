@@ -55,13 +55,14 @@ const App = () => (
             <ScrollToTop />
             <CacheClearer />
             <Routes>
-              {/* Public */}
+              {/* ── Fully public routes — render immediately, no auth wait ── */}
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
+              {/* Registration page: always public, no auth dependency */}
               <Route path="/register/:slug" element={<Register />} />
               <Route path="/company/:companySlug" element={<CompanyPage />} />
 
-              {/* Dashboard (protected) */}
+              {/* ── Dashboard (protected) — ProtectedRoute handles auth wait ── */}
               <Route path="/dashboard" element={<Navigate to="/dashboard/events" replace />} />
               <Route path="/dashboard/*" element={
                 <ProtectedRoute>

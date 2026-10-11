@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, publicSupabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -38,28 +38,48 @@ export function useEventBySlug(slug: string | undefined) {
   return useQuery({
     queryKey: ["event-slug", slug],
     queryFn: async () => {
-      const { data: event, error } = await supabase
+      if (!slug) return null;
+      const normalizedSlug = slug.trim().toLowerCase().replace(/\/+$/, "");
+
+      // 1. Try exact match (case-insensitive) using lightweight publicSupabase client
+      let { data: event, error } = await publicSupabase
         .from("events")
         .select("*")
-        .eq("slug", slug!)
+        .ilike("slug", normalizedSlug)
         .eq("status", "live")
-        .maybeSingle(); // Returns null (not an error) when no row matches
-      
-      // A real DB error (network, permissions) — rethrow so React Query marks as error
+        .maybeSingle();
+
       if (error) throw error;
-      // No live event found for this slug — return null, Register shows "Not Found"
+
+      // 2. Fallback: prefix match in case the URL had trailing chars truncated or missing
+      // (e.g. user visited sonathon-2-o-vqt07 when database slug is sonathon-2-o-vqt07j)
+      if (!event && normalizedSlug.length >= 4) {
+        const { data: prefixEvents } = await publicSupabase
+          .from("events")
+          .select("*")
+          .ilike("slug", `${normalizedSlug}%`)
+          .eq("status", "live")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (prefixEvents && prefixEvents.length > 0) {
+          event = prefixEvents[0];
+        }
+      }
+
+      // No live event found for this slug
       if (!event) return null;
-      
+
       let hostProfile = null;
       if (event.user_id) {
-        const { data: profileData } = await supabase
+        const { data: profileData } = await publicSupabase
           .from("profiles")
           .select("company, full_name")
           .eq("id", event.user_id)
           .maybeSingle();
         hostProfile = profileData;
       }
-      
+
       return { ...event, profiles: hostProfile } as Event & { profiles?: { company: string | null; full_name: string | null } };
     },
     enabled: !!slug,

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, publicSupabase } from "@/integrations/supabase/client";
 import { Tables, Json } from "@/integrations/supabase/types";
 
 export type Registration = Tables<"registrations"> & {
@@ -40,7 +40,7 @@ export function useCreateRegistration() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ event_id, data }: { event_id: string; data: Record<string, string> }) => {
-      const { data: result, error } = await supabase
+      const { data: result, error } = await publicSupabase
         .rpc("register_for_event", {
           p_event_id: event_id,
           p_data: data as unknown as Json,

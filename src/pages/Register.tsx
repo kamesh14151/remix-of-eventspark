@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -367,6 +367,14 @@ const Register = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  // If the user accessed the page via a truncated or prefix slug (e.g. "sonathon-2-o-vqt07" instead of "sonathon-2-o-vqt07j"),
+  // update the URL to the canonical slug seamlessly in the address bar without reloading
+  useEffect(() => {
+    if (event?.slug && slug && slug !== event.slug) {
+      window.history.replaceState(null, "", `/register/${event.slug}`);
+    }
+  }, [event?.slug, slug]);
 
   const handleFieldChange = useCallback((label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));

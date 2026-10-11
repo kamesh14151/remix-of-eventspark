@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, publicSupabase } from "@/integrations/supabase/client";
 
 export function useCompanyBySlug(slug: string | undefined) {
   return useQuery({
     queryKey: ["public-company", slug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from("profiles")
         .select("id, full_name, company, company_description, website, avatar_url, social_links, company_slug")
         .eq("company_slug", slug!)
@@ -21,7 +21,7 @@ export function usePublicEventsByUser(userId: string | undefined) {
   return useQuery({
     queryKey: ["public-events", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await publicSupabase
         .from("events")
         .select("*")
         .eq("user_id", userId!)

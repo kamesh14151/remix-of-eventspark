@@ -16,3 +16,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// A lightweight public client that uses plain localStorage — no brokered preview
+// session handshake. Use this for queries on public-facing pages (e.g. /register/:slug)
+// so the page renders immediately without waiting up to 2+ seconds for the auth bridge.
+export const publicSupabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    storage: localStorage,
+    persistSession: false,
+    autoRefreshToken: false,
+  }
+});
