@@ -6,10 +6,12 @@ import {
   Settings,
   LogOut,
   Eye,
+  Crown,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useIsAdmin } from "@/hooks/useAdminOverview";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +40,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed" && !isMobile;
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
+  const { data: isAdmin } = useIsAdmin();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -107,6 +110,29 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/dashboard/admin"
+                      className="hover:bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium border border-amber-500/20 rounded-lg mt-2"
+                      activeClassName="bg-amber-500/20 text-amber-800 dark:text-amber-300 font-semibold border-amber-500/40"
+                      onClick={handleNavClick}
+                    >
+                      <Crown className="mr-2 h-4 w-4 text-amber-500" />
+                      {!collapsed && (
+                        <div className="flex items-center justify-between w-full">
+                          <span>Admin Portal</span>
+                          <span className="text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded font-bold">
+                            OWNER
+                          </span>
+                        </div>
+                      )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

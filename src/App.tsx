@@ -21,6 +21,7 @@ import Attendees from "./pages/dashboard/Attendees";
 import Analytics from "./pages/dashboard/Analytics";
 import Integrations from "./pages/dashboard/Integrations";
 import SettingsPage from "./pages/dashboard/SettingsPage";
+import AdminOverview from "./pages/dashboard/AdminOverview";
 import NotFound from "./pages/NotFound";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -67,10 +68,12 @@ const App = () => (
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="integrations" element={<Integrations />} />
                       <Route path="settings" element={<SettingsPage />} />
+                      <Route path="admin" element={<AdminOverview />} />
                     </Routes>
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+              <Route path="/admin" element={<Navigate to="/dashboard/admin" replace />} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

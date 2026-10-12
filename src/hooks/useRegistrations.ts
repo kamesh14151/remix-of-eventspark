@@ -1,22 +1,40 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, publicSupabase } from "@/integrations/supabase/client";
 import { Tables, Json } from "@/integrations/supabase/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Registration = Tables<"registrations"> & {
   events?: { name: string } | null;
 };
 
 export function useRegistrations() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ["registrations"],
+    queryKey: ["registrations", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
+
+      // 1. Fetch all events published by this host
+      const { data: userEvents, error: evError } = await supabase
+        .from("events")
+        .select("id, name")
+        .eq("user_id", user.id);
+
+      if (evError) throw evError;
+      const eventIds = (userEvents || []).map((e) => e.id);
+      if (eventIds.length === 0) return [];
+
+      // 2. Query registrations strictly for this host's published events
       const { data, error } = await supabase
         .from("registrations")
         .select("*, events(name)")
+        .in("event_id", eventIds)
         .order("created_at", { ascending: false });
+
       if (error) throw error;
-      return data as Registration[];
+      return (data || []) as Registration[];
     },
+    enabled: !!user,
   });
 }
 
@@ -69,25 +87,39 @@ export function useDeleteRegistration() {
 }
 
 export function useRegistrationStats() {
+  const { user } = useAuth();
   return useQuery({
-    queryKey: ["registration-stats"],
+    queryKey: ["registration-stats", user?.id],
     queryFn: async () => {
-      const { data: registrations, error } = await supabase
-        .from("registrations")
-        .select("created_at, event_id, status");
-      if (error) throw error;
-      
+      if (!user?.id) {
+        return { total: 0, activeEvents: 0, chartData: [], registrations: [], events: [] };
+      }
+
       const { data: events, error: eventsError } = await supabase
         .from("events")
-        .select("id, name, status");
+        .select("id, name, status")
+        .eq("user_id", user.id);
+
       if (eventsError) throw eventsError;
+      const eventIds = (events || []).map((e) => e.id);
+
+      if (eventIds.length === 0) {
+        return { total: 0, activeEvents: 0, chartData: [], registrations: [], events: [] };
+      }
+
+      const { data: registrations, error } = await supabase
+        .from("registrations")
+        .select("created_at, event_id, status")
+        .in("event_id", eventIds);
+
+      if (error) throw error;
 
       const total = registrations?.length ?? 0;
-      const activeEvents = events?.filter(e => e.status === "live").length ?? 0;
+      const activeEvents = events?.filter((e) => e.status === "live").length ?? 0;
 
       // Group by month
       const byMonth: Record<string, number> = {};
-      registrations?.forEach(r => {
+      registrations?.forEach((r) => {
         const month = new Date(r.created_at).toLocaleString("default", { month: "short" });
         byMonth[month] = (byMonth[month] || 0) + 1;
       });
@@ -96,5 +128,6 @@ export function useRegistrationStats() {
 
       return { total, activeEvents, chartData, registrations, events };
     },
+    enabled: !!user,
   });
 }
