@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy, Target, Sparkles } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy, Target, Sparkles, AlertCircle, Info } from "lucide-react";
 import { useEventBySlug, Event, ProblemStatement } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
@@ -305,6 +305,8 @@ const RegistrationForm = ({
   problemStatements = [],
   selectedProblemStatement,
   onSelectProblemStatement,
+  emailConflictError,
+  onClearEmailConflict,
 }: {
   formFields: FormField[] | undefined;
   formData: Record<string, string>;
@@ -323,6 +325,8 @@ const RegistrationForm = ({
   problemStatements?: ProblemStatement[];
   selectedProblemStatement?: ProblemStatement | null;
   onSelectProblemStatement?: (ps: ProblemStatement) => void;
+  emailConflictError?: { email: string; eventName: string; message: string } | null;
+  onClearEmailConflict?: () => void;
 }) => {
   const leadCollege = Object.entries(formData).find(([k]) => /college|university|clg|institution/i.test(k))?.[1] || "";
   const leadDept = Object.entries(formData).find(([k]) => /department|dept|branch|stream/i.test(k))?.[1] || "";
@@ -481,14 +485,26 @@ const RegistrationForm = ({
                 size="md"
               />
             ) : (
-              <Input
-                type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
-                placeholder={field.placeholder || field.label}
-                required={field.required}
-                value={formData[field.label] || ""}
-                onChange={e => onFieldChange(field.label, e.target.value)}
-                className="h-10 text-sm rounded-xl"
-              />
+              <div className="space-y-1">
+                <Input
+                  type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
+                  placeholder={field.placeholder || field.label}
+                  required={field.required}
+                  value={formData[field.label] || ""}
+                  onChange={e => onFieldChange(field.label, e.target.value)}
+                  className={`h-10 text-sm rounded-xl ${
+                    emailConflictError && field.field_type === "email"
+                      ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-500/5"
+                      : ""
+                  }`}
+                />
+                {emailConflictError && field.field_type === "email" && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium pt-0.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    Already registered for this event. Please use a different email address.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         );
@@ -583,6 +599,55 @@ const RegistrationForm = ({
         </div>
       )}
 
+      {emailConflictError && (
+        <div className="p-3.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-foreground space-y-2.5 animate-in fade-in duration-200">
+          <div className="flex items-start gap-2.5">
+            <div className="p-1 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+              <AlertCircle className="w-4 h-4" />
+            </div>
+            <div className="space-y-1.5 text-xs flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-foreground text-sm">Email Already Registered for This Event</span>
+                {onClearEmailConflict && (
+                  <button
+                    type="button"
+                    onClick={onClearEmailConflict}
+                    className="text-[11px] text-muted-foreground hover:text-foreground font-medium"
+                  >
+                    Dismiss
+                  </button>
+                )}
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                The email <strong className="text-foreground">{emailConflictError.email}</strong> is already registered for <strong>{emailConflictError.eventName}</strong>.
+              </p>
+              <div className="p-2.5 rounded-lg bg-amber-500/15 border border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-200 flex items-start gap-2 leading-relaxed">
+                <Info className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <span>
+                  <strong>Used this email for another event?</strong> Crack allows using the same email across different events without restriction. However, each event keeps its registrations independent. To register another team member or participant for <em>{emailConflictError.eventName}</em>, please provide their unique email address.
+                </span>
+              </div>
+              <div className="pt-1 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.querySelector<HTMLInputElement>('input[type="email"]');
+                    if (el) {
+                      el.focus();
+                      el.select();
+                    }
+                    onClearEmailConflict?.();
+                  }}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-amber-600 text-white font-medium hover:bg-amber-700 transition-colors shadow-sm"
+                >
+                  Change Email Address
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start gap-2 pt-2">
         <Checkbox id="gdpr" checked={consent} onCheckedChange={(c) => onConsentChange(!!c)} />
         <Label htmlFor="gdpr" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
@@ -610,9 +675,13 @@ const FlyerImage = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string 
 );
 
 const PoweredBy = () => (
-  <p className="text-center text-xs text-muted-foreground mt-6">
-    Powered by <span className="font-semibold">eventspark</span> — Developed by <span className="font-semibold">AJ STUDIOZ</span>
-  </p>
+  <div className="flex items-center justify-center gap-2 mt-6 text-xs text-muted-foreground flex-wrap">
+    <span>Powered by</span>
+    <img src="/Crack.png" alt="Crack" className="h-4 object-contain inline-block" />
+    <span className="text-[10px] font-semibold tracking-wider text-muted-foreground/70">BY</span>
+    <img src="/aj-logo.png" alt="AJ STUDIOZ" className="h-4 object-contain inline-block" />
+    <span className="font-semibold text-foreground/80">AJ STUDIOZ</span>
+  </div>
 );
 
 // ─── Main component ───
@@ -627,6 +696,11 @@ const Register = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [emailConflictError, setEmailConflictError] = useState<{
+    email: string;
+    eventName: string;
+    message: string;
+  } | null>(null);
 
   const [selectedProblemStatement, setSelectedProblemStatement] = useState<ProblemStatement | null>(null);
 
@@ -648,6 +722,7 @@ const Register = () => {
 
   const handleFieldChange = useCallback((label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
+    setEmailConflictError(null);
   }, []);
 
   const [loadTimedOut, setLoadTimedOut] = useState(false);
@@ -798,7 +873,7 @@ const Register = () => {
             eventLocation: event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual",
             venueDetails: event.location_value || "",
             eventDescription: event.description || "",
-            hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "EventSpark",
+            hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "Crack",
             amount: finalData.razorpay_payment_id ? Number(finalData.razorpay_amount || 0) : undefined,
             paymentId: finalData.razorpay_payment_id,
             registrationId,

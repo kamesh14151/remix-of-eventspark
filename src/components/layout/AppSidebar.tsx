@@ -53,14 +53,10 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className={collapsed ? "p-2 flex items-center justify-center" : "p-4"}>
-        <NavLink to="/dashboard/events" className="flex items-center gap-2" onClick={handleNavClick}>
+        <NavLink to="/dashboard/events" className="flex items-center gap-2.5 overflow-hidden" onClick={handleNavClick}>
+          <img src="/crack-logo.png" alt="Crack" className="w-7 h-7 object-contain rounded-lg shrink-0" />
           {!collapsed && (
-            <span className="font-display text-lg font-bold text-sidebar-foreground">
-              eventspark
-            </span>
-          )}
-          {collapsed && (
-            <span className="font-display text-sm font-bold text-sidebar-foreground">ES</span>
+            <img src="/Crack.png" alt="Crack" className="h-6 object-contain" />
           )}
         </NavLink>
       </SidebarHeader>

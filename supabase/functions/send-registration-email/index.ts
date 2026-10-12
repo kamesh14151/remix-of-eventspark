@@ -71,7 +71,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         // NOTE: You must verify your domain in Resend and use it here (e.g. events@yourdomain.com)
         // Using onboarding@resend.dev only works if you send to the email you signed up with.
-        from: "EventSpark <onboarding@resend.dev>",
+        from: "Crack <onboarding@resend.dev>",
         to: attendeeEmail,
         subject: `Registration Confirmed: ${event.name}`,
         html: `
@@ -80,8 +80,24 @@ serve(async (req: Request) => {
             <p>Thank you for registering. We look forward to seeing you.</p>
             ${event.event_date ? `<p><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>` : ""}
             ${event.location_value ? `<p><strong>Location/Link:</strong> ${event.location_value}</p>` : ""}
-            <hr style="border: 1px solid #eaeaea; margin: 20px 0;" />
-            <p style="color: #666; font-size: 12px;">Powered by EventSpark</p>
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #eaeaea; text-align: center;">
+              <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="vertical-align: middle; padding-right: 8px;">
+                    <img src="https://events.ajstudioz.co.in/Crack.png" alt="Crack" height="20" style="height: 20px; max-height: 20px; display: inline-block; vertical-align: middle; border: 0;" />
+                  </td>
+                  <td style="vertical-align: middle; font-size: 11px; font-weight: 700; color: #9CA3AF; padding-right: 8px;">
+                    BY
+                  </td>
+                  <td style="vertical-align: middle; padding-right: 6px;">
+                    <img src="https://events.ajstudioz.co.in/aj-logo.png" alt="AJ STUDIOZ" height="18" style="height: 18px; max-height: 18px; display: inline-block; vertical-align: middle; border: 0;" />
+                  </td>
+                  <td style="vertical-align: middle; font-size: 12px; font-weight: 700; color: #374151;">
+                    AJ STUDIOZ
+                  </td>
+                </tr>
+              </table>
+            </div>
           </div>
         `,
       }),

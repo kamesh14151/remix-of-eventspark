@@ -46,16 +46,16 @@ serve(async (req: Request) => {
     let htmlContent = "";
 
     if (actionType === "signup") {
-      subject = "Welcome to EventSpark!";
+      subject = "Welcome to Crack!";
       htmlContent = `
         <!DOCTYPE html>
         <html lang="en" dir="ltr">
           <body style="background-color: #ffffff; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px 40px;">
               <div style="text-align: center; margin-bottom: 32px;">
-                <img src="https://events.ajstudioz.co.in/favicon.png" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
+                <img src="https://events.ajstudioz.co.in/crack-logo.png" alt="Crack Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
                 <h1 style="font-size: 32px; font-weight: bold; color: #020304; margin: 0 0 16px;">
-                  Welcome to EventSpark
+                  Welcome to Crack
                 </h1>
                 <p style="font-size: 18px; color: #374151; margin: 0;">
                   Hi ${targetName}!
@@ -63,7 +63,7 @@ serve(async (req: Request) => {
               </div>
               <div style="margin-bottom: 32px;">
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0 0 16px;">
-                  Thank you for creating an account with EventSpark. We're excited to have you on board!
+                  Thank you for creating an account with Crack. We're excited to have you on board!
                 </p>
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0;">
                   Get started by creating your first event or exploring the dashboard.
@@ -74,18 +74,23 @@ serve(async (req: Request) => {
                   Go to Dashboard
                 </a>
               </div>
-              <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB; text-align: center;">
-                <p style="font-size: 14px; color: #6B7280; margin: 0 0 16px 0;">
-                  Powered by <strong>EventSpark</strong>
-                </p>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                  <p style="font-size: 14px; color: #9CA3AF; margin: 0;">Developed by</p>
-                  <img src="https://events.ajstudioz.co.in/aj-logo.png" alt="AJ STUDIOZ Logo" width="20" height="20" style="border-radius: 4px;" />
-                  <p style="font-size: 14px; color: #9CA3AF; margin: 0;"><strong>AJ STUDIOZ</strong></p>
-                </div>
-                <p style="font-size: 12px; color: #9CA3AF; margin: 12px 0 0 0;">
-                  © ${new Date().getFullYear()} EventSpark. All rights reserved.
-                </p>
+              <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #E5E7EB; text-align: center;">
+                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                  <tr>
+                    <td style="vertical-align: middle; padding-right: 8px;">
+                      <img src="https://events.ajstudioz.co.in/Crack.png" alt="Crack" height="20" style="height: 20px; max-height: 20px; display: inline-block; vertical-align: middle; border: 0;" />
+                    </td>
+                    <td style="vertical-align: middle; font-size: 11px; font-weight: 700; color: #9CA3AF; padding-right: 8px;">
+                      BY
+                    </td>
+                    <td style="vertical-align: middle; padding-right: 6px;">
+                      <img src="https://events.ajstudioz.co.in/aj-logo.png" alt="AJ STUDIOZ" height="18" style="height: 18px; max-height: 18px; display: inline-block; vertical-align: middle; border: 0;" />
+                    </td>
+                    <td style="vertical-align: middle; font-size: 12px; font-weight: 700; color: #374151;">
+                      AJ STUDIOZ
+                    </td>
+                  </tr>
+                </table>
               </div>
             </div>
           </body>
@@ -99,6 +104,7 @@ serve(async (req: Request) => {
           <body style="background-color: #ffffff; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Ubuntu,sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
               <div style="margin-bottom: 24px;">
+                <img src="https://events.ajstudioz.co.in/crack-logo.png" alt="Crack Logo" width="48" height="48" style="display: block; margin: 0 0 16px 0; border-radius: 8px;" />
                 <h1 style="font-size: 32px; font-weight: 600; color: #000000; margin: 0 0 24px 0; line-height: 1.2;">
                   We've noticed a new login
                 </h1>
@@ -106,7 +112,7 @@ serve(async (req: Request) => {
                   Hi ${targetName},
                 </p>
                 <p style="font-size: 16px; color: #000000; margin: 0 0 16px 0; line-height: 1.5;">
-                  This is a routine security alert. Someone logged into your EventSpark account from a new IP address or device:
+                  This is a routine security alert. Someone logged into your Crack account from a new IP address or device:
                 </p>
               </div>
               <div style="margin: 24px 0;">
@@ -122,13 +128,23 @@ serve(async (req: Request) => {
                   If this was you, you can ignore this alert. If you noticed any suspicious activity on your account, please secure your account immediately.
                 </p>
               </div>
-              <hr style="border-color: #e5e7eb; margin: 32px 0;" />
-              <div style="margin-bottom: 24px;">
-                <p style="font-size: 16px; color: #000000; margin: 0 0 4px 0; line-height: 1.5;">Best regards,</p>
-                <p style="font-size: 16px; color: #000000; font-weight: 600; margin: 0; line-height: 1.5;">The EventSpark Security Team</p>
-              </div>
-              <div>
-                <p style="font-size: 12px; color: #6b7280; margin: 0 0 8px 0; line-height: 1.5;">© ${new Date().getFullYear()} EventSpark</p>
+              <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #E5E7EB; text-align: center;">
+                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                  <tr>
+                    <td style="vertical-align: middle; padding-right: 8px;">
+                      <img src="https://events.ajstudioz.co.in/Crack.png" alt="Crack" height="20" style="height: 20px; max-height: 20px; display: inline-block; vertical-align: middle; border: 0;" />
+                    </td>
+                    <td style="vertical-align: middle; font-size: 11px; font-weight: 700; color: #9CA3AF; padding-right: 8px;">
+                      BY
+                    </td>
+                    <td style="vertical-align: middle; padding-right: 6px;">
+                      <img src="https://events.ajstudioz.co.in/aj-logo.png" alt="AJ STUDIOZ" height="18" style="height: 18px; max-height: 18px; display: inline-block; vertical-align: middle; border: 0;" />
+                    </td>
+                    <td style="vertical-align: middle; font-size: 12px; font-weight: 700; color: #374151;">
+                      AJ STUDIOZ
+                    </td>
+                  </tr>
+                </table>
               </div>
             </div>
           </body>
@@ -143,7 +159,7 @@ serve(async (req: Request) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "EventSpark Security <onboarding@resend.dev>",
+        from: "Crack Security <onboarding@resend.dev>",
         to: targetEmail,
         subject: subject,
         html: htmlContent,

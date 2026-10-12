@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { type, email, emails, name, loginTime, browser, eventTitle, hostName, teamMembers, subject: customSubject, message, flyerUrl, eventDate, eventLocation, eventEndDate, eventTimezone } = req.body;
-    const targetHostName = hostName || "EventSpark";
+    const targetHostName = hostName || "Crack";
 
     const recipientList: string[] = Array.isArray(emails) && emails.length > 0 
       ? emails 
@@ -41,31 +41,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let subject = customSubject || "";
     let htmlContent = "";
     const targetName = name || "there";
-    const logoUrl = "https://events.ajstudioz.co.in/favicon.png"; 
+    const logoUrl = "https://events.ajstudioz.co.in/crack-logo.png"; 
+    const crackWordmarkUrl = "https://events.ajstudioz.co.in/Crack.png";
     const ajLogoUrl = "https://events.ajstudioz.co.in/aj-logo.png";
     const creditsHtml = `
-      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #E5E7EB;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="text-align: center;">
+      <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #E5E7EB; text-align: center;">
+        <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
           <tr>
-            <td align="center" style="padding-bottom: 16px;">
-              <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
-                <tr>
-                  <td style="font-size: 14px; color: #6B7280; padding-right: 8px;">Powered by</td>
-                  <td><img src="${logoUrl}" alt="EventSpark Logo" width="32" height="32" style="border-radius: 6px; display: block;" /></td>
-                  <td style="font-size: 14px; color: #6B7280; font-weight: bold; padding-left: 8px;">EventSpark</td>
-                </tr>
-              </table>
+            <td style="vertical-align: middle; padding-right: 8px;">
+              <img src="${crackWordmarkUrl}" alt="Crack" height="22" style="height: 22px; max-height: 22px; display: inline-block; vertical-align: middle; border: 0;" />
             </td>
-          </tr>
-          <tr>
-            <td align="center">
-              <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
-                <tr>
-                  <td style="font-size: 14px; color: #9CA3AF; padding-right: 8px;">Developed by</td>
-                  <td><img src="${ajLogoUrl}" alt="AJ STUDIOZ Logo" width="32" height="32" style="border-radius: 6px; display: block;" /></td>
-                  <td style="font-size: 14px; color: #9CA3AF; font-weight: bold; padding-left: 8px;">AJ STUDIOZ</td>
-                </tr>
-              </table>
+            <td style="vertical-align: middle; font-size: 11px; font-weight: 700; color: #9CA3AF; padding-right: 8px; letter-spacing: 0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              BY
+            </td>
+            <td style="vertical-align: middle; padding-right: 6px;">
+              <img src="${ajLogoUrl}" alt="AJ STUDIOZ" height="18" style="height: 18px; max-height: 18px; display: inline-block; vertical-align: middle; border: 0;" />
+            </td>
+            <td style="vertical-align: middle; font-size: 12px; font-weight: 700; color: #374151; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              AJ STUDIOZ
             </td>
           </tr>
         </table>
@@ -75,16 +68,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let attachments: any[] = [];
 
     if (type === "signup") {
-      subject = "Welcome to EventSpark!";
+      subject = "Welcome to Crack!";
       htmlContent = `
         <!DOCTYPE html>
         <html lang="en" dir="ltr">
           <body style="background-color: #ffffff; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px 40px;">
               <div style="text-align: center; margin-bottom: 32px;">
-                <img src="${logoUrl}" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
+                <img src="${logoUrl}" alt="Crack Logo" width="48" height="48" style="display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
                 <h1 style="font-size: 32px; font-weight: bold; color: #020304; margin: 0 0 16px;">
-                  Welcome to EventSpark
+                  Welcome to Crack
                 </h1>
                 <p style="font-size: 18px; color: #374151; margin: 0;">
                   Hi ${targetName}!
@@ -92,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               </div>
               <div style="margin-bottom: 32px;">
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0 0 16px;">
-                  Thank you for creating an account with EventSpark. We're excited to have you on board!
+                  Thank you for creating an account with Crack. We're excited to have you on board!
                 </p>
                 <p style="font-size: 16px; color: #374151; line-height: 24px; margin: 0;">
                   Get started by creating your first event or exploring the dashboard.
@@ -116,7 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           <body style="background-color: #ffffff; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Ubuntu,sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
               <div style="margin-bottom: 24px;">
-                <img src="${logoUrl}" alt="EventSpark Logo" width="48" height="48" style="display: block; margin: 0 0 16px 0; border-radius: 8px;" />
+                <img src="${logoUrl}" alt="Crack Logo" width="48" height="48" style="display: block; margin: 0 0 16px 0; border-radius: 8px;" />
                 <h1 style="font-size: 32px; font-weight: 600; color: #000000; margin: 0 0 24px 0; line-height: 1.2;">
                   We've noticed a new login
                 </h1>
@@ -124,7 +117,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   Hi ${targetName},
                 </p>
                 <p style="font-size: 16px; color: #000000; margin: 0 0 16px 0; line-height: 1.5;">
-                  This is a routine security alert. Someone logged into your EventSpark account from a new IP address or device:
+                  This is a routine security alert. Someone logged into your Crack account from a new IP address or device:
                 </p>
               </div>
               <div style="margin-24px 0;">
@@ -146,7 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </html>
       `;
     } else if (type === "announcement" || type === "custom" || type === "manual") {
-      subject = customSubject || `Important Update: ${eventTitle || "EventSpark"}`;
+      subject = customSubject || `Important Update: ${eventTitle || "Crack"}`;
       const formattedParagraphs = (message || "")
         .split("\n\n")
         .map((p: string) => `<p style="margin: 0 0 16px 0; line-height: 1.6;">${p.replace(/\n/g, "<br />")}</p>`)
@@ -164,8 +157,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 </div>
               ` : `
                 <div style="background: linear-gradient(135deg, #18181B 0%, #27272A 100%); padding: 32px 24px; text-align: center;">
-                  <img src="${logoUrl}" alt="EventSpark" width="48" height="48" style="border-radius: 10px; margin-bottom: 12px;" />
-                  <h2 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">${eventTitle || 'EventSpark'}</h2>
+                  <img src="${logoUrl}" alt="Crack" width="48" height="48" style="border-radius: 10px; margin-bottom: 12px;" />
+                  <h2 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">${eventTitle || 'Crack'}</h2>
                 </div>
               `}
               <div style="padding: 32px;">
@@ -341,7 +334,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const toEmail of recipientList) {
       try {
         const { data, error } = await resend.emails.send({
-          from: "EventSpark <eventspark@ajstudioz.co.in>",
+          from: "Crack <eventspark@ajstudioz.co.in>",
           to: toEmail,
           subject: subject,
           html: htmlContent,

@@ -35,7 +35,7 @@ describe("emailService", () => {
         location_type: "physical",
         location_value: "Tech Campus Hall A",
       },
-      hostName: "EventSpark Admin",
+      hostName: "Crack Admin",
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);

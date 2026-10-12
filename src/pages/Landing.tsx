@@ -494,7 +494,7 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between mb-10">
             <h2 className="text-2xl sm:text-3xl font-display text-foreground tracking-[-0.02em]" style={{ fontWeight: titleWeight }}>
-              Popular events on eventspark
+              Popular events on Crack
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -545,7 +545,7 @@ const Landing = () => {
               Everything you need to run amazing events
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              From page creation to post-event analytics, eventspark has you covered.
+              From page creation to post-event analytics, Crack has you covered.
             </p>
           </motion.div>
 
@@ -626,7 +626,7 @@ const Landing = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
             {[
               {
-                quote: "eventspark cut our setup time by 80%. We went from spending hours on registration to minutes.",
+                quote: "Crack cut our setup time by 80%. We went from spending hours on registration to minutes.",
                 name: "Sarah Chen",
                 role: "Community manager",
                 avatar: avatarSarah,
@@ -644,7 +644,7 @@ const Landing = () => {
                 avatar: avatarPriya,
               },
               {
-                quote: "We switched from three different tools to just eventspark. Everything in one place is a game changer.",
+                quote: "We switched from three different tools to just Crack. Everything in one place is a game changer.",
                 name: "James Liu",
                 role: "Tech meetup organizer",
                 avatar: "https://i.pravatar.cc/300?img=33",
@@ -778,7 +778,7 @@ const Landing = () => {
                     Ready to create your next event?
                   </h2>
                   <p className="text-background/70 text-lg mb-8 max-w-lg mx-auto text-balance">
-                    Join thousands of organizers who use eventspark to build better events.
+                    Join thousands of organizers who use Crack to build better events.
                   </p>
                   <Button size="lg" className="text-base font-semibold px-8 h-12 bg-primary text-primary-foreground hover:bg-primary/90" asChild>
                     <Link to="/auth">Get started for free <ArrowRight className="ml-2 w-4 h-4" /></Link>
@@ -795,7 +795,7 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <Logo size="md" />
           <p className="text-sm text-muted-foreground flex items-center">
-            © 2026 eventspark. All rights reserved. Developed by <img src={AjStudiozLogo} alt="AJ Studioz" className="inline-block h-5 ml-2" />
+            © 2026 Crack. All rights reserved. Developed by <img src={AjStudiozLogo} alt="AJ Studioz" className="inline-block h-5 ml-2" />
           </p>
         </div>
       </footer>
