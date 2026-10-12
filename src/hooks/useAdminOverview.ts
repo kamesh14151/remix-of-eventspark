@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -132,5 +132,41 @@ export function useAdminOverview() {
     },
     enabled: !!user && !!isAdmin,
     refetchInterval: 1000 * 60, // Refresh every minute
+  });
+}
+
+export function useAdminDelete() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ action, targetId }: { action: "delete_attendee" | "delete_event" | "delete_host"; targetId: string }) => {
+      if (!user) throw new Error("Authentication required");
+
+      const res = await fetch("/api/admin-overview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-email": user.email || "",
+        },
+        body: JSON.stringify({
+          action,
+          targetId,
+          userId: user.id,
+          userEmail: user.email,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to execute deletion");
+      }
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-overview"] });
+      qc.invalidateQueries({ queryKey: ["registrations"] });
+      qc.invalidateQueries({ queryKey: ["events"] });
+    },
   });
 }

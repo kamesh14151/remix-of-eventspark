@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useParams } from "react-router-dom";
 import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy, Target, Sparkles, AlertCircle, Info, ExternalLink, Check } from "lucide-react";
 import { useEventBySlug, Event, ProblemStatement } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";

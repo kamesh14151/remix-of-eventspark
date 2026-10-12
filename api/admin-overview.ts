@@ -77,6 +77,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(403).json({ error: "Access denied. Admin privileges required." });
     }
 
+    // Handle Admin Mutation Actions (Delete attendee, event, or host)
+    const { action, targetId } = req.body || {};
+
+    if (action === "delete_attendee" && targetId) {
+      const { error: delErr } = await supabaseAdmin
+        .from("registrations")
+        .delete()
+        .eq("id", targetId);
+      if (delErr) throw delErr;
+      return res.status(200).json({ success: true, message: "Attendee registration deleted successfully" });
+    }
+
+    if (action === "delete_event" && targetId) {
+      // 1. Delete associated registrations & form fields
+      await supabaseAdmin.from("registrations").delete().eq("event_id", targetId);
+      await supabaseAdmin.from("form_fields").delete().eq("event_id", targetId);
+      // 2. Delete event record
+      const { error: delErr } = await supabaseAdmin.from("events").delete().eq("id", targetId);
+      if (delErr) throw delErr;
+      return res.status(200).json({ success: true, message: "Event and associated records deleted successfully" });
+    }
+
+    if (action === "delete_host" && targetId) {
+      // 1. Find all events created by this host
+      const { data: hostEvents } = await supabaseAdmin.from("events").select("id").eq("user_id", targetId);
+      const evIds = (hostEvents || []).map((e: any) => e.id);
+      if (evIds.length > 0) {
+        await supabaseAdmin.from("registrations").delete().in("event_id", evIds);
+        await supabaseAdmin.from("form_fields").delete().in("event_id", evIds);
+        await supabaseAdmin.from("events").delete().eq("user_id", targetId);
+      }
+      // 2. Delete profile & roles
+      await supabaseAdmin.from("profiles").delete().eq("id", targetId);
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", targetId);
+      // 3. Delete user from auth
+      const { error: userDelErr } = await supabaseAdmin.auth.admin.deleteUser(targetId);
+      if (userDelErr) throw userDelErr;
+      return res.status(200).json({ success: true, message: "Host account and all associated events deleted successfully" });
+    }
+
     // 2. Fetch all system data using Service Role
     const [usersRes, profilesRes, eventsRes, registrationsRes] = await Promise.all([
       supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
