@@ -918,8 +918,22 @@ const Register = () => {
       }
     }
 
-    // Always filter out Company and Job Title from all events
-    return fields.filter((f) => !/^(company|job title)$/i.test(f.label.trim()));
+    // Filter out:
+    // 1. Company and Job Title
+    // 2. URLs / WhatsApp invite links mistakenly added as form field labels
+    // 3. Duplicate manual "Team member 1/2" fields if native team members are enabled
+    // 4. Manual "Track 1 or 2" fields if problem statements exist
+    const hasTeamSupport = (event.max_team_size || 1) > 1;
+    const hasTrackSupport = publishedProblemStatements && publishedProblemStatements.length > 0;
+
+    return fields.filter((f) => {
+      const label = f.label.trim();
+      if (/^(company|job title)$/i.test(label)) return false;
+      if (/^https?:\/\/|whatsapp\.com/i.test(label)) return false;
+      if (hasTeamSupport && /^team member \d+$/i.test(label)) return false;
+      if (hasTrackSupport && /^track(\s*\d+)?(\s*or\s*\d+)?$/i.test(label)) return false;
+      return true;
+    });
   }, [event, formFields, isHackathon]);
 
   // Show spinner while the EVENT is loading, but never hang indefinitely
