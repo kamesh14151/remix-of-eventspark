@@ -80,6 +80,7 @@ export type Database = {
           team_pricing: string | null
           problem_statements: Json | null
           email_from_name: string | null
+          whatsapp_group_url: string | null
         }
         Insert: {
           background_image_url?: string | null
@@ -111,6 +112,7 @@ export type Database = {
           team_pricing?: string | null
           problem_statements?: Json | null
           email_from_name?: string | null
+          whatsapp_group_url?: string | null
         }
         Update: {
           background_image_url?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           team_pricing?: string | null
           problem_statements?: Json | null
           email_from_name?: string | null
+          whatsapp_group_url?: string | null
         }
         Relationships: []
       }

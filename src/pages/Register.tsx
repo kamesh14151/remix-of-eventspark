@@ -335,14 +335,16 @@ const EventInfo = ({
   className = "",
   selectedProblemStatementId,
   onSelectProblemStatement,
+  align = "left",
 }: {
   event: Event;
   className?: string;
   selectedProblemStatementId?: string;
   onSelectProblemStatement?: (ps: ProblemStatement) => void;
+  align?: "left" | "center";
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const locationIcon = event.location_type === "physical" ? <MapPin className="w-4 h-4" /> : event.location_type === "hybrid" ? <Globe className="w-4 h-4" /> : <Video className="w-4 h-4" />;
+  const locationIcon = event.location_type === "physical" ? <MapPin className="w-4 h-4 shrink-0" /> : event.location_type === "hybrid" ? <Globe className="w-4 h-4 shrink-0" /> : <Video className="w-4 h-4 shrink-0" />;
   const locationLabel = event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual";
   const dateTimeStr = formatEventDateTime(event);
 
@@ -356,17 +358,19 @@ const EventInfo = ({
   const isTruncatable = sentences.length > 1;
   const truncated = isTruncatable ? sentences.slice(0, 1).join("").trim() + "…" : description;
 
+  const isCenter = align === "center";
+
   return (
-    <div className={`pt-6 md:pt-0 ${className}`}>
+    <div className={`pt-6 md:pt-0 ${className} ${isCenter ? "text-center" : "text-left"}`}>
       {dateTimeStr && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+        <div className={`flex items-center gap-2 text-sm text-muted-foreground mb-3 ${isCenter ? "justify-center" : "justify-start"}`}>
           <CalendarDays className="w-4 h-4 shrink-0" />
-          {dateTimeStr}
+          <span>{dateTimeStr}</span>
         </div>
       )}
-      <h1 className="text-2xl sm:text-4xl md:text-7xl font-display font-bold">{event.name}</h1>
+      <h1 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold text-foreground">{event.name}</h1>
       {description && (
-        <div className="mt-4 mb-4">
+        <div className="mt-3 mb-3">
           <p className="text-muted-foreground text-sm leading-relaxed">
             {expanded || !isTruncatable ? description : truncated}
           </p>
@@ -382,8 +386,9 @@ const EventInfo = ({
           )}
         </div>
       )}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        {locationIcon} {locationLabel}
+      <div className={`flex items-center gap-2 text-sm text-muted-foreground mt-2 ${isCenter ? "justify-center" : "justify-start"}`}>
+        {locationIcon} <span>{locationLabel}</span>
+        {event.location_value && <span className="font-medium text-foreground">· {event.location_value}</span>}
       </div>
 
       {/* Problem statements showcase tiles under hackathon name */}
@@ -913,7 +918,9 @@ const Register = () => {
       return [...formFields, ...extra];
     }
 
-    return formFields;
+    const fieldsToUse = formFields || [];
+    // Always filter out Company and Job Title
+    return fieldsToUse.filter((f) => !/^(company|job title)$/i.test(f.label.trim()));
   }, [event, formFields, isHackathon]);
 
   // Show spinner while the EVENT is loading, but never hang indefinitely
@@ -1230,28 +1237,28 @@ const Register = () => {
   if (template === "split") {
     return wrapDark(
       <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
-        {/* Left: flyer image — top-aligned on mobile */}
+        {/* Left: flyer image, date, event title, location & description */}
         <div className="md:w-1/2 bg-muted/20 flex flex-col items-center justify-center p-8 md:p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-primary/5" />
-          <div className="relative z-10 flex flex-col items-center">
-            <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="w-32 h-32 sm:w-48 sm:h-48 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl mb-8" />
+          <div className="relative z-10 flex flex-col items-center text-center max-w-lg w-full">
+            <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="w-32 h-32 sm:w-44 sm:h-44 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl mb-6" />
             {!flyerUrl && (
-              <div className="w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
-                <Zap className="w-10 h-10 text-white" />
+              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
+                <Zap className="w-8 h-8 text-white" />
               </div>
             )}
-            <h2 className="text-3xl font-display font-bold text-center mt-2">{event.name}</h2>
+            <EventInfo
+              event={event}
+              align="center"
+              className="w-full text-center"
+              selectedProblemStatementId={selectedProblemStatement?.id}
+              onSelectProblemStatement={setSelectedProblemStatement}
+            />
           </div>
         </div>
         {/* Right: form */}
         <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
           <div className="w-full max-w-md animate-in fade-in duration-300">
-            <EventInfo
-              event={event}
-              className="mb-8"
-              selectedProblemStatementId={selectedProblemStatement?.id}
-              onSelectProblemStatement={setSelectedProblemStatement}
-            />
             <RegistrationForm {...formProps} />
             <PoweredBy />
           </div>

@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Check, Layout, Columns2, Monitor,
-  Loader2, Sparkles, MapPin, Video, Globe, Upload, X, PartyPopper, ExternalLink, Eye, Copy, Info, GraduationCap, Plus
+  Loader2, Sparkles, MapPin, Video, Globe, Upload, X, PartyPopper, ExternalLink, Eye, Copy, Info, GraduationCap, Plus, MessageCircle
 } from "lucide-react";
 import { useCreateEvent, useUpdateEvent, useEvent } from "@/hooks/useEvents";
 import TemplatePreview from "@/components/TemplatePreview";
@@ -136,6 +136,7 @@ const CreateEvent = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [emailFromName, setEmailFromName] = useState("");
+  const [whatsappGroupUrl, setWhatsappGroupUrl] = useState("");
   const [colorMode, setColorMode] = useState<"light" | "dark">("light");
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
@@ -192,6 +193,7 @@ const CreateEvent = () => {
       setFlyerUrl(existingEvent.background_image_url || null);
       setLogoUrl(existingEvent.logo_url || null);
       setEmailFromName((existingEvent as any).email_from_name || "");
+      setWhatsappGroupUrl((existingEvent as any).whatsapp_group_url || "");
       setInitialized(true);
     }
   }, [isEditMode, existingEvent, initialized]);
@@ -307,6 +309,7 @@ const CreateEvent = () => {
         background_image_url: flyerUrl || undefined,
         logo_url: logoUrl || undefined,
         email_from_name: emailFromName.trim() || undefined,
+        whatsapp_group_url: whatsappGroupUrl.trim() || null,
         color_mode: colorMode,
         status: "live",
       } as any;
@@ -872,6 +875,34 @@ const CreateEvent = () => {
                     />
                     <p className="text-[11px] text-muted-foreground">
                       Inbox preview: <strong>{emailFromName.trim() || profile?.company || name || "Crack"}</strong> &lt;eventspark@ajstudioz.co.in&gt;
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Section: WhatsApp Group Auto-Join Link */}
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-semibold text-base mb-0.5">WhatsApp Group / Community Link</h3>
+                      <p className="text-xs text-muted-foreground">Attendees are prompted to auto-join this WhatsApp group immediately upon registering.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="whatsapp-url">WhatsApp Group Invite URL</Label>
+                    <Input
+                      id="whatsapp-url"
+                      placeholder="https://chat.whatsapp.com/..."
+                      value={whatsappGroupUrl}
+                      onChange={(e) => setWhatsappGroupUrl(e.target.value)}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Paste your WhatsApp group or community invite URL (e.g. <code>https://chat.whatsapp.com/AbCdEf12345</code>). If left empty, default community link will be used.
                     </p>
                   </div>
                 </CardContent>

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, ExternalLink, Copy, MoreVertical } from "lucide-react";
+import { ArrowLeft, ExternalLink, Copy, MoreVertical, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tables } from "@/integrations/supabase/types";
 import { toast } from "sonner";
@@ -68,6 +68,9 @@ export default function EventDetailHeader({ event, onStatusChange }: Props) {
               <ExternalLink className="w-3 h-3 mr-1" /> Preview
             </a>
           </Button>
+          <Button variant="default" size="sm" className="h-8 text-xs rounded-full" onClick={() => navigate(`/dashboard/events/${event.id}/edit`)}>
+            <Edit className="w-3 h-3 mr-1" /> Edit
+          </Button>
         </div>
 
         {/* Mobile 3-dot menu */}
@@ -79,6 +82,9 @@ export default function EventDetailHeader({ event, onStatusChange }: Props) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate(`/dashboard/events/${event.id}/edit`)}>
+                <Edit className="w-3.5 h-3.5 mr-2" /> Edit Event
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onStatusChange("draft")}>
                 Set Draft
               </DropdownMenuItem>

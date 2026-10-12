@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, Trash2, UserPlus, UserMinus, Users, GraduationCap, Target, Save, Sparkles } from "lucide-react";
+import { Loader2, Trash2, UserPlus, UserMinus, Users, GraduationCap, Target, Save, Sparkles, MessageCircle, Mail } from "lucide-react";
 import { useEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/useEvents";
 import { useFormFields, useAddFormField, useDeleteFormField, useBulkInsertFormFields } from "@/hooks/useFormFields";
 import { useEventMembers, useInviteMember, useRemoveMember } from "@/hooks/useEventMembers";
@@ -41,12 +41,18 @@ const EventDetail = () => {
   const [maxTeamSize, setMaxTeamSize] = useState<string>("1");
   const [minTeamSize, setMinTeamSize] = useState<string>("1");
   const [teamPricing, setTeamPricing] = useState<string>("per_member");
+  const [whatsappUrl, setWhatsappUrl] = useState<string>("");
+  const [emailFromName, setEmailFromName] = useState<string>("");
+  const [isSavingWhatsapp, setIsSavingWhatsapp] = useState(false);
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
 
   useEffect(() => {
     if (event) {
       setMaxTeamSize(event.max_team_size ? String(event.max_team_size) : "1");
       setMinTeamSize((event as any).min_team_size ? String((event as any).min_team_size) : "1");
       setTeamPricing(event.team_pricing || "per_member");
+      setWhatsappUrl(event.whatsapp_group_url || "");
+      setEmailFromName((event as any).email_from_name || "");
     }
   }, [event]);
 
@@ -118,6 +124,32 @@ const EventDetail = () => {
       team_pricing: teamPricing,
     });
     toast.success("Team size settings updated!");
+  };
+
+  const handleSaveWhatsapp = async () => {
+    if (!event) return;
+    setIsSavingWhatsapp(true);
+    try {
+      await handleUpdate({ whatsapp_group_url: whatsappUrl.trim() || null });
+      toast.success("WhatsApp group joining link updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update WhatsApp group link");
+    } finally {
+      setIsSavingWhatsapp(false);
+    }
+  };
+
+  const handleSaveEmailFrom = async () => {
+    if (!event) return;
+    setIsSavingEmail(true);
+    try {
+      await handleUpdate({ email_from_name: emailFromName.trim() || null });
+      toast.success("Email sender name updated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update email sender name");
+    } finally {
+      setIsSavingEmail(false);
+    }
   };
 
   return (
@@ -466,9 +498,90 @@ const EventDetail = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-5">
-          <div className="bg-card rounded-xl p-5 sm:p-6 space-y-4">
-            <h3 className="font-display font-semibold">Event settings</h3>
+        <TabsContent value="settings" className="mt-5 space-y-5">
+          {/* WhatsApp Group Auto-Join Link */}
+          <div className="bg-card rounded-xl p-5 sm:p-6 space-y-4 border border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display font-semibold text-base">WhatsApp Group Joining Link</h3>
+                <p className="text-xs text-muted-foreground">
+                  Attendees will be prompted to auto-join this WhatsApp group immediately after successfully completing registration.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 max-w-2xl">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="https://chat.whatsapp.com/..."
+                  value={whatsappUrl}
+                  onChange={(e) => setWhatsappUrl(e.target.value)}
+                  className="rounded-full flex-1"
+                />
+                <Button
+                  onClick={handleSaveWhatsapp}
+                  disabled={isSavingWhatsapp}
+                  className="rounded-full shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  {isSavingWhatsapp ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4 mr-2" /> Save WhatsApp Link</>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Example: <code>https://chat.whatsapp.com/L1234567890abcdef</code>
+              </p>
+            </div>
+          </div>
+
+          {/* Email Sender Name */}
+          <div className="bg-card rounded-xl p-5 sm:p-6 space-y-4 border border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-display font-semibold text-base">Email Sender Name (From:)</h3>
+                <p className="text-xs text-muted-foreground">
+                  Display name shown in attendees' inbox for registration tickets and announcements.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 max-w-2xl">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  placeholder="e.g. Sona College Hackathon Team"
+                  value={emailFromName}
+                  onChange={(e) => setEmailFromName(e.target.value)}
+                  className="rounded-full flex-1"
+                />
+                <Button
+                  onClick={handleSaveEmailFrom}
+                  disabled={isSavingEmail}
+                  className="rounded-full shrink-0"
+                >
+                  {isSavingEmail ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+                  ) : (
+                    <><Save className="w-4 h-4 mr-2" /> Save Sender Name</>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Inbox preview: <strong>{emailFromName.trim() || event.name}</strong> &lt;eventspark@ajstudioz.co.in&gt;
+              </p>
+            </div>
+          </div>
+
+          {/* Registration Limits & Deadlines */}
+          <div className="bg-card rounded-xl p-5 sm:p-6 space-y-4 border border-border">
+            <h3 className="font-display font-semibold">Registration limits</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Registration limit</Label>

@@ -12,8 +12,6 @@ export const standardDefaultFields: FormFieldTemplate[] = [
   { label: "Full Name", field_type: "text", required: true, position: 0, placeholder: "e.g. Alex Johnson" },
   { label: "Email Address", field_type: "email", required: true, position: 1, placeholder: "alex@example.com" },
   { label: "Phone Number", field_type: "tel", required: false, position: 2, placeholder: "+91 98765 43210" },
-  { label: "Company", field_type: "text", required: false, position: 3, placeholder: "e.g. Acme Corp" },
-  { label: "Job Title", field_type: "text", required: false, position: 4, placeholder: "e.g. Software Engineer" },
 ];
 
 export const studentHackathonFields: FormFieldTemplate[] = [
