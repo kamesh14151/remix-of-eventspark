@@ -679,8 +679,7 @@ const PoweredBy = () => (
     <span>Powered by</span>
     <img src="/Crack.png" alt="Crack" className="h-4 object-contain inline-block" />
     <span className="text-[10px] font-semibold tracking-wider text-muted-foreground/70">BY</span>
-    <img src="/aj-logo.png" alt="AJ STUDIOZ" className="h-4 object-contain inline-block" />
-    <span className="font-semibold text-foreground/80">AJ STUDIOZ</span>
+    <img src="/aj-logo.png" alt="AJ STUDIOZ" className="h-4.5 object-contain inline-block" />
   </div>
 );
 

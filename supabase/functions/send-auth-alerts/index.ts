@@ -83,11 +83,8 @@ serve(async (req: Request) => {
                     <td style="vertical-align: middle; font-size: 11px; font-weight: 700; color: #9CA3AF; padding-right: 8px;">
                       BY
                     </td>
-                    <td style="vertical-align: middle; padding-right: 6px;">
+                    <td style="vertical-align: middle;">
                       <img src="https://events.ajstudioz.co.in/aj-logo.png" alt="AJ STUDIOZ" height="18" style="height: 18px; max-height: 18px; display: inline-block; vertical-align: middle; border: 0;" />
-                    </td>
-                    <td style="vertical-align: middle; font-size: 12px; font-weight: 700; color: #374151;">
-                      AJ STUDIOZ
                     </td>
                   </tr>
                 </table>
@@ -137,11 +134,8 @@ serve(async (req: Request) => {
                     <td style="vertical-align: middle; font-size: 11px; font-weight: 700; color: #9CA3AF; padding-right: 8px;">
                       BY
                     </td>
-                    <td style="vertical-align: middle; padding-right: 6px;">
+                    <td style="vertical-align: middle;">
                       <img src="https://events.ajstudioz.co.in/aj-logo.png" alt="AJ STUDIOZ" height="18" style="height: 18px; max-height: 18px; display: inline-block; vertical-align: middle; border: 0;" />
-                    </td>
-                    <td style="vertical-align: middle; font-size: 12px; font-weight: 700; color: #374151;">
-                      AJ STUDIOZ
                     </td>
                   </tr>
                 </table>

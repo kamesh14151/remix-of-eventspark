@@ -54,11 +54,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             <td style="vertical-align: middle; font-size: 11px; font-weight: 700; color: #9CA3AF; padding-right: 8px; letter-spacing: 0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
               BY
             </td>
-            <td style="vertical-align: middle; padding-right: 6px;">
+            <td style="vertical-align: middle;">
               <img src="${ajLogoUrl}" alt="AJ STUDIOZ" height="18" style="height: 18px; max-height: 18px; display: inline-block; vertical-align: middle; border: 0;" />
-            </td>
-            <td style="vertical-align: middle; font-size: 12px; font-weight: 700; color: #374151; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              AJ STUDIOZ
             </td>
           </tr>
         </table>
