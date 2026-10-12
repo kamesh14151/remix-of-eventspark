@@ -872,7 +872,7 @@ const Register = () => {
             eventLocation: event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual",
             venueDetails: event.location_value || "",
             eventDescription: event.description || "",
-            hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || "Crack",
+            hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || event.name || "Crack",
             amount: finalData.razorpay_payment_id ? Number(finalData.razorpay_amount || 0) : undefined,
             paymentId: finalData.razorpay_payment_id,
             registrationId,

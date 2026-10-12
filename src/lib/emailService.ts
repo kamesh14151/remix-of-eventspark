@@ -58,7 +58,7 @@ export async function sendManualEmail({
     eventLocation: event.location_type === "physical" ? "In-Person" : event.location_type === "hybrid" ? "Hybrid" : "Virtual",
     venueDetails: event.location_value || "",
     flyerUrl: event.background_image_url,
-    hostName: hostName || (event as any).profiles?.company || (event as any).profiles?.full_name || "Crack",
+    hostName: hostName || (event as any).profiles?.company || (event as any).profiles?.full_name || event.name || "Crack",
   };
 
   try {

@@ -25,8 +25,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { type, email, emails, name, loginTime, browser, eventTitle, hostName, teamMembers, subject: customSubject, message, flyerUrl, eventDate, eventLocation, eventEndDate, eventTimezone } = req.body;
-    const targetHostName = hostName || "Crack";
+    const effectiveSenderName = (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") || eventTitle || "Crack";
+    const safeSenderName = effectiveSenderName.replace(/["\r\n]/g, "").trim() || "Crack";
+    const targetHostName = (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") || eventTitle || "Crack";
 
     const recipientList: string[] = Array.isArray(emails) && emails.length > 0 
       ? emails 
@@ -331,7 +332,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const toEmail of recipientList) {
       try {
         const { data, error } = await resend.emails.send({
-          from: "Crack <eventspark@ajstudioz.co.in>",
+          from: `${safeSenderName} <eventspark@ajstudioz.co.in>`,
           to: toEmail,
           subject: subject,
           html: htmlContent,
