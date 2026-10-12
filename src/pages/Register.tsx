@@ -502,52 +502,6 @@ const RegistrationForm = ({
         </div>
       )}
 
-      {/* Problem Statement Track Selector */}
-      {problemStatements && problemStatements.length > 0 && (
-        <div className="space-y-2 p-3.5 rounded-xl bg-primary/5 border border-primary/20">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
-              <Target className="w-3.5 h-3.5 text-primary" /> Choose Problem Statement Track <span className="text-destructive">*</span>
-            </Label>
-            <span className="text-[10px] text-muted-foreground font-mono">{problemStatements.length} Tracks Available</span>
-          </div>
-          <select
-            value={selectedProblemStatement?.id || ""}
-            onChange={(e) => {
-              const found = problemStatements.find((p) => p.id === e.target.value);
-              if (found && onSelectProblemStatement) {
-                onSelectProblemStatement(found);
-              }
-            }}
-            className="h-10 text-sm rounded-xl w-full border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer"
-            required
-          >
-            <option value="" disabled>-- Select Your Problem Statement Track --</option>
-            {problemStatements.map((ps, i) => (
-              <option key={ps.id || i} value={ps.id}>
-                {ps.code || `PS0${i + 1}`}: {ps.title} {ps.category ? `(${ps.category})` : ""}
-              </option>
-            ))}
-          </select>
-
-          {selectedProblemStatement && (
-            <div className="p-2.5 rounded-lg bg-background/80 border border-primary/20 text-xs space-y-1 animate-in fade-in duration-200">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground font-semibold">
-                  {selectedProblemStatement.code || "PS"}
-                </span>
-                <span className="font-semibold text-foreground truncate">
-                  {selectedProblemStatement.title}
-                </span>
-              </div>
-              <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
-                {selectedProblemStatement.description}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
       {formFields?.map((field) => {
         const isYearField = /year of study|academic year/i.test(field.label);
         const isDeptField = /department|branch|stream/i.test(field.label);

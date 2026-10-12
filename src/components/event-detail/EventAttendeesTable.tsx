@@ -140,7 +140,7 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
 
   const handleExportCSV = () => {
     if (!filtered?.length) return;
-    const headers = ["Name", "Email", "Status", "College / Institution", "Department", "Year of Study", "Roll No", "Phone", "Date"];
+    const headers = ["Name", "Email", "Status", "College / Institution", "Department", "Year of Study", "Roll No", "Phone", "Problem Statement Track", "Date"];
     const rows = filtered.map(r => {
       const data = (r.data || {}) as Record<string, string>;
       const student = extractStudentInfo(data);
@@ -153,6 +153,7 @@ export default function EventAttendeesTable({ eventId, event: propEvent }: { eve
         student.year || "",
         student.rollNo || "",
         student.phone || "",
+        data["Problem Statement"] || (data as any)["problem_statement_title"] || "",
         format(new Date(r.created_at), "MMM d, yyyy"),
       ];
     });

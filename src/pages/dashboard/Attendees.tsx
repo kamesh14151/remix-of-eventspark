@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Github, Trash2, Phone } from "lucide-react";
+import { Search, Download, Loader2, ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, Mail, Eye, GraduationCap, Building2, Github, Trash2, Phone, Target } from "lucide-react";
 import { useRegistrations, useDeleteRegistration, Registration } from "@/hooks/useRegistrations";
 import { useRegistrationStats } from "@/hooks/useRegistrations";
 import { format } from "date-fns";
@@ -158,7 +158,7 @@ const Attendees = () => {
 
   const handleExportCSV = () => {
     if (!filtered?.length) return;
-    const headers = ["Name", "Email", "Event", "College / Institution", "Department", "Year of Study", "Roll No", "Phone", "Status", "Date"];
+    const headers = ["Name", "Email", "Event", "College / Institution", "Department", "Year of Study", "Roll No", "Phone", "Problem Statement Track", "Status", "Date"];
     const rows = filtered.map(r => {
       const data = (r.data || {}) as Record<string, string>;
       const student = extractStudentInfo(data);
@@ -171,6 +171,7 @@ const Attendees = () => {
         student.year || "",
         student.rollNo || "",
         student.phone || "",
+        data["Problem Statement"] || (data as any)["problem_statement_title"] || "",
         r.status,
         format(new Date(r.created_at), "MMM d, yyyy"),
       ];
@@ -300,6 +301,14 @@ const Attendees = () => {
                       <TableCell className="font-medium">
                         <div className="space-y-0.5">
                           <p className="font-semibold text-sm text-foreground">{attendeeName}</p>
+                          {(data["Problem Statement"] || (data as any)["problem_statement_title"]) && (
+                            <div className="pt-0.5">
+                              <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20 flex items-center gap-1 w-fit max-w-[220px] truncate">
+                                <Target className="w-2.5 h-2.5 shrink-0" />
+                                <span className="truncate">{data["Problem Statement"] || (data as any)["problem_statement_title"]}</span>
+                              </Badge>
+                            </div>
+                          )}
                           {student.isStudent && student.college ? (
                             <p className="text-xs text-muted-foreground flex items-center gap-1 md:hidden truncate">
                               <GraduationCap className="w-3 h-3 text-primary shrink-0" />
@@ -439,6 +448,24 @@ const Attendees = () => {
 
             return (
               <div className="space-y-4 pt-2">
+                {/* Problem Statement Track if present */}
+                {(data["Problem Statement"] || data["selected_problem_statement_title"] || (data as any)["problem_statement_title"]) && (
+                  <div className="p-3.5 rounded-xl bg-primary/10 border border-primary/25 space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-primary font-semibold text-xs uppercase tracking-wider">
+                      <Target className="w-3.5 h-3.5" />
+                      Selected Problem Statement Track
+                    </div>
+                    <p className="font-semibold text-sm text-foreground">
+                      {data["Problem Statement"] || data["selected_problem_statement_title"] || (data as any)["problem_statement_title"]}
+                    </p>
+                    {(data as any)["problem_statement_category"] && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Domain: {(data as any)["problem_statement_category"]}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
                 {/* Academic details card if student fields are present */}
                 {student.isStudent && (
                   <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
