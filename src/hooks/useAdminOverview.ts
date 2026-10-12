@@ -50,6 +50,7 @@ export interface AdminAttendee {
   eventId: string;
   eventName: string;
   eventSlug: string;
+  hostId?: string;
   hostEmail: string;
   hostName: string;
   name: string;
@@ -60,6 +61,7 @@ export interface AdminAttendee {
   status: string;
   createdAt: string;
   data: any;
+  rawRecord?: any;
 }
 
 export interface AdminOverviewData {

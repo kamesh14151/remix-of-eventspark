@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useAdminOverview, useIsAdmin, useAdminDelete, AdminHost, AdminEvent, AdminAttendee } from "@/hooks/useAdminOverview";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,14 @@ import {
   Target,
   CheckCircle2,
   User,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Database,
+  FileJson,
+  Hash,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -58,6 +66,9 @@ export default function AdminOverview() {
   const [attendeeSearch, setAttendeeSearch] = useState("");
   const [attendeeEventFilter, setAttendeeEventFilter] = useState("all");
   const [selectedAttendee, setSelectedAttendee] = useState<AdminAttendee | null>(null);
+  const [attendeeModalTab, setAttendeeModalTab] = useState<"formatted" | "database">("formatted");
+  const [attendeePage, setAttendeePage] = useState(1);
+  const ATTENDEES_PER_PAGE = 10;
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Deletion modal state
@@ -141,6 +152,18 @@ export default function AdminOverview() {
       );
     });
   }, [data?.attendees, attendeeSearch, attendeeEventFilter]);
+
+  // Reset attendee page when search or filter changes
+  useEffect(() => {
+    setAttendeePage(1);
+  }, [attendeeSearch, attendeeEventFilter]);
+
+  // Attendee slide pagination calculation (10 per slide)
+  const totalAttendeePages = Math.max(1, Math.ceil(filteredAttendees.length / ATTENDEES_PER_PAGE));
+  const safeAttendeePage = Math.min(attendeePage, totalAttendeePages);
+  const startAttendeeIdx = (safeAttendeePage - 1) * ATTENDEES_PER_PAGE;
+  const endAttendeeIdx = Math.min(startAttendeeIdx + ATTENDEES_PER_PAGE, filteredAttendees.length);
+  const paginatedAttendees = filteredAttendees.slice(startAttendeeIdx, endAttendeeIdx);
 
   // Export Attendees to CSV
   const handleExportAttendees = () => {
@@ -680,7 +703,7 @@ export default function AdminOverview() {
 
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground">
-                Showing {filteredAttendees.length} of {data?.attendees?.length || 0} attendees
+                Showing {filteredAttendees.length === 0 ? 0 : startAttendeeIdx + 1}–{endAttendeeIdx} of {filteredAttendees.length} attendees
               </span>
               <Button variant="outline" size="sm" onClick={handleExportAttendees} className="rounded-xl gap-1.5">
                 <Download className="w-4 h-4" />
@@ -704,14 +727,14 @@ export default function AdminOverview() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAttendees.length === 0 ? (
+                  {paginatedAttendees.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                         No attendees found matching your search.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredAttendees.map((att) => {
+                    paginatedAttendees.map((att) => {
                       const teamMembers = Array.isArray(att.data?.team_members) ? att.data.team_members : [];
                       return (
                         <TableRow key={att.id} className="hover:bg-muted/30">
@@ -798,231 +821,518 @@ export default function AdminOverview() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* ── Slide Pagination Controls (10 Per Slide) ── */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-border/60 bg-muted/20">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>
+                  Showing <strong className="text-foreground">{filteredAttendees.length === 0 ? 0 : startAttendeeIdx + 1}</strong> to{" "}
+                  <strong className="text-foreground">{endAttendeeIdx}</strong> of{" "}
+                  <strong className="text-foreground">{filteredAttendees.length}</strong> attendees
+                </span>
+                <Badge variant="outline" className="text-[10px] font-normal py-0 h-5">
+                  Page {safeAttendeePage} of {totalAttendeePages} (10 per slide)
+                </Badge>
+              </div>
+
+              {totalAttendeePages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 rounded-lg text-xs gap-1"
+                    disabled={safeAttendeePage <= 1}
+                    onClick={() => setAttendeePage(1)}
+                    title="First Slide"
+                  >
+                    <ChevronsLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">First</span>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 rounded-lg text-xs gap-1"
+                    disabled={safeAttendeePage <= 1}
+                    onClick={() => setAttendeePage((p) => Math.max(1, p - 1))}
+                    title="Previous Slide"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Prev</span>
+                  </Button>
+
+                  {/* Page numbers chips */}
+                  <div className="flex items-center gap-1 mx-1">
+                    {Array.from({ length: totalAttendeePages }, (_, i) => i + 1)
+                      .filter((p) => p === 1 || p === totalAttendeePages || Math.abs(p - safeAttendeePage) <= 1)
+                      .map((p, idx, arr) => (
+                        <React.Fragment key={p}>
+                          {idx > 0 && arr[idx - 1] !== p - 1 && (
+                            <span className="text-xs text-muted-foreground px-1">...</span>
+                          )}
+                          <Button
+                            variant={p === safeAttendeePage ? "default" : "outline"}
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded-lg text-xs"
+                            onClick={() => setAttendeePage(p)}
+                          >
+                            {p}
+                          </Button>
+                        </React.Fragment>
+                      ))}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 rounded-lg text-xs gap-1"
+                    disabled={safeAttendeePage >= totalAttendeePages}
+                    onClick={() => setAttendeePage((p) => Math.min(totalAttendeePages, p + 1))}
+                    title="Next Slide"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 rounded-lg text-xs gap-1"
+                    disabled={safeAttendeePage >= totalAttendeePages}
+                    onClick={() => setAttendeePage(totalAttendeePages)}
+                    title="Last Slide"
+                  >
+                    <span className="hidden sm:inline">Last</span>
+                    <ChevronsRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* ── Attendee Details Modal with Styled JSON Parsing ── */}
-      <Dialog open={!!selectedAttendee} onOpenChange={() => setSelectedAttendee(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden p-0">
-          <DialogHeader className="p-6 pb-4 border-b border-border/60">
-            <DialogTitle className="font-display text-xl font-bold flex items-center justify-between">
-              <span>Attendee Registration Details</span>
-              <Badge variant="outline" className="text-xs font-normal">
-                {selectedAttendee?.eventName}
-              </Badge>
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Registered by <strong>{selectedAttendee?.name}</strong> · Host: {selectedAttendee?.hostEmail}
-            </DialogDescription>
+      {/* ── Attendee Details Modal with Styled JSON Parsing & Complete Database Record View ── */}
+      <Dialog
+        open={!!selectedAttendee}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedAttendee(null);
+            setAttendeeModalTab("formatted");
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden p-0">
+          <DialogHeader className="p-6 pb-4 border-b border-border/60 bg-muted/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <DialogTitle className="font-display text-xl font-bold flex items-center gap-2">
+                  <span>Attendee Registration Details</span>
+                  <Badge variant="outline" className="text-xs font-normal">
+                    {selectedAttendee?.eventName}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription className="text-xs mt-1">
+                  Registered by <strong>{selectedAttendee?.name}</strong> · Host: {selectedAttendee?.hostEmail}
+                </DialogDescription>
+              </div>
+
+              {/* View Switcher: Formatted vs Full Database Record */}
+              <div className="flex items-center gap-1 p-1 bg-background rounded-xl border border-border shadow-xs self-start sm:self-auto">
+                <Button
+                  variant={attendeeModalTab === "formatted" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-7 px-2.5 rounded-lg text-xs gap-1.5 font-medium"
+                  onClick={() => setAttendeeModalTab("formatted")}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span>Formatted View</span>
+                </Button>
+                <Button
+                  variant={attendeeModalTab === "database" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-7 px-2.5 rounded-lg text-xs gap-1.5 font-medium"
+                  onClick={() => setAttendeeModalTab("database")}
+                >
+                  <Database className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Database Row (All Details)</span>
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
 
           {selectedAttendee && (
             <div className="flex-1 overflow-y-auto p-6 space-y-5">
-              {/* Primary Contact Card */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm p-4 rounded-xl bg-muted/40 border border-border/50">
-                <div>
-                  <span className="text-[11px] text-muted-foreground block font-medium">Attendee Name</span>
-                  <span className="font-semibold text-foreground text-sm">{selectedAttendee.name}</span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-muted-foreground block font-medium">Email</span>
-                  <span className="font-mono text-xs text-foreground truncate block">{selectedAttendee.email || "—"}</span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-muted-foreground block font-medium">Phone</span>
-                  <span className="text-foreground text-xs">{selectedAttendee.phone || "—"}</span>
-                </div>
-                <div>
-                  <span className="text-[11px] text-muted-foreground block font-medium">Status</span>
-                  <Badge variant="outline" className="text-[10px] capitalize font-medium mt-0.5">
-                    {selectedAttendee.status}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* ── Problem Statement Track (if selected) ── */}
-              {(selectedAttendee.data?.problem_statement_title || selectedAttendee.data?.["Problem Statement"]) && (
-                <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4 text-primary shrink-0" />
-                    <h4 className="font-semibold text-xs uppercase tracking-wider text-primary">
-                      Problem Statement Track
-                    </h4>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {selectedAttendee.data.problem_statement_code && (
-                        <span className="font-mono text-xs px-2 py-0.5 rounded font-bold bg-primary text-primary-foreground">
-                          {selectedAttendee.data.problem_statement_code}
+              {attendeeModalTab === "database" ? (
+                /* ── TAB: FULL DATABASE ROW (ALL DETAILS IN SUPABASE DB) ── */
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div>
+                        <strong className="block">Supabase PostgreSQL Database Record</strong>
+                        <span className="text-[11px] opacity-90 font-mono">
+                          Table: registrations · Row ID: {selectedAttendee.id}
                         </span>
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 rounded-lg text-xs gap-1.5 border-amber-500/30 bg-background text-foreground"
+                      onClick={() =>
+                        handleCopy(
+                          JSON.stringify(
+                            selectedAttendee.rawRecord || {
+                              id: selectedAttendee.id,
+                              event_id: selectedAttendee.eventId,
+                              status: selectedAttendee.status,
+                              created_at: selectedAttendee.createdAt,
+                              data: selectedAttendee.data,
+                              host_email: selectedAttendee.hostEmail,
+                              host_name: selectedAttendee.hostName,
+                              event_name: selectedAttendee.eventName,
+                            },
+                            null,
+                            2
+                          ),
+                          "full-db-record",
+                          "Database JSON"
+                        )
+                      }
+                    >
+                      {copiedId === "full-db-record" ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
                       )}
-                      <span className="font-medium text-sm text-foreground">
-                        {selectedAttendee.data.problem_statement_title || selectedAttendee.data["Problem Statement"]}
-                      </span>
-                    </div>
-                    {selectedAttendee.data.problem_statement_category && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Domain: {selectedAttendee.data.problem_statement_category}
-                      </p>
-                    )}
+                      <span>{copiedId === "full-db-record" ? "Copied JSON" : "Copy Full JSON"}</span>
+                    </Button>
+                  </div>
+
+                  <div className="rounded-xl border border-border/80 bg-neutral-950 p-4 text-xs font-mono text-neutral-100 overflow-x-auto max-h-[550px] leading-relaxed selection:bg-primary selection:text-primary-foreground shadow-inner">
+                    <pre>
+                      {JSON.stringify(
+                        selectedAttendee.rawRecord || {
+                          id: selectedAttendee.id,
+                          event_id: selectedAttendee.eventId,
+                          status: selectedAttendee.status,
+                          created_at: selectedAttendee.createdAt,
+                          data: selectedAttendee.data,
+                          host_email: selectedAttendee.hostEmail,
+                          host_name: selectedAttendee.hostName,
+                          event_name: selectedAttendee.eventName,
+                        },
+                        null,
+                        2
+                      )}
+                    </pre>
                   </div>
                 </div>
-              )}
-
-              {/* ── Academic Details (College, Department, Year, Roll No) ── */}
-              {(selectedAttendee.college || selectedAttendee.data?.["College / University"] || selectedAttendee.data?.["Department / Branch"] || selectedAttendee.data?.["Year of Study"] || selectedAttendee.data?.["Roll Number / Student ID"]) && (
-                <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                    <GraduationCap className="w-4 h-4 text-muted-foreground" />
-                    <span>Academic & College Details</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    {(selectedAttendee.college || selectedAttendee.data?.["College / University"]) && (
-                      <div className="p-2.5 rounded-lg bg-muted/40">
-                        <span className="text-muted-foreground block text-[11px]">College / University</span>
-                        <span className="font-medium text-foreground">
-                          {selectedAttendee.college || selectedAttendee.data?.["College / University"]}
-                        </span>
+              ) : (
+                /* ── TAB: FORMATTED VIEW ── */
+                <>
+                  {/* Database Identifiers & System Info Card */}
+                  <div className="p-4 rounded-xl border border-border bg-card space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-semibold text-foreground">
+                      <div className="flex items-center gap-2">
+                        <Hash className="w-4 h-4 text-muted-foreground" />
+                        <span>Database Identifiers & Tracking</span>
                       </div>
-                    )}
-                    {(selectedAttendee.department || selectedAttendee.data?.["Department / Branch"]) && (
-                      <div className="p-2.5 rounded-lg bg-muted/40">
-                        <span className="text-muted-foreground block text-[11px]">Department / Branch</span>
-                        <span className="font-medium text-foreground">
-                          {selectedAttendee.department || selectedAttendee.data?.["Department / Branch"]}
-                        </span>
-                      </div>
-                    )}
-                    {selectedAttendee.data?.["Year of Study"] && (
-                      <div className="p-2.5 rounded-lg bg-muted/40">
-                        <span className="text-muted-foreground block text-[11px]">Year of Study</span>
-                        <Badge variant="secondary" className="mt-1 font-semibold">
-                          {selectedAttendee.data["Year of Study"]}
-                        </Badge>
-                      </div>
-                    )}
-                    {selectedAttendee.data?.["Roll Number / Student ID"] && (
-                      <div className="p-2.5 rounded-lg bg-muted/40">
-                        <span className="text-muted-foreground block text-[11px]">Roll Number / Student ID</span>
-                        <span className="font-mono font-medium text-foreground mt-1 block">
-                          {selectedAttendee.data["Roll Number / Student ID"]}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Team Members (Parsed & Styled) ── */}
-              {Array.isArray(selectedAttendee.data?.team_members) && selectedAttendee.data.team_members.length > 0 && (
-                <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-300">
-                      <Users className="w-4 h-4 text-emerald-600" />
-                      <span>Team Members ({selectedAttendee.data.team_members.length})</span>
+                      <Badge variant="outline" className="text-[10px] capitalize font-medium">
+                        Status: {selectedAttendee.status}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
-                      {selectedAttendee.data.team_members.length + 1} Total in Team
-                    </Badge>
-                  </div>
 
-                  <div className="space-y-2">
-                    {selectedAttendee.data.team_members.map((member: any, idx: number) => (
-                      <div key={idx} className="p-3 rounded-lg border border-emerald-500/15 bg-background flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-6 h-6 rounded-full bg-emerald-500/15 text-emerald-700 font-bold flex items-center justify-center text-[10px] shrink-0">
-                            {idx + 1}
-                          </div>
-                          <div>
-                            <span className="font-semibold text-foreground">{member.name}</span>
-                            <span className="text-muted-foreground font-mono ml-2">({member.email})</span>
-                          </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 rounded-lg bg-muted/40 flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block">Registration UUID (DB Primary Key)</span>
+                          <span className="font-mono text-foreground text-xs break-all">{selectedAttendee.id}</span>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => handleCopy(selectedAttendee.id, "att-uuid", "Registration ID")}
+                        >
+                          {copiedId === "att-uuid" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </Button>
+                      </div>
 
-                        {(member.college || member.department) && (
-                          <div className="flex items-center gap-1.5 flex-wrap sm:justify-end">
-                            {member.college && (
-                              <Badge variant="secondary" className="text-[10px] font-normal py-0">
-                                {member.college}
-                              </Badge>
-                            )}
-                            {member.department && (
-                              <Badge variant="outline" className="text-[10px] font-normal py-0">
-                                {member.department}
-                              </Badge>
-                            )}
+                      <div className="p-2.5 rounded-lg bg-muted/40 flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block">Event UUID (Foreign Key)</span>
+                          <span className="font-mono text-foreground text-xs break-all">{selectedAttendee.eventId}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => handleCopy(selectedAttendee.eventId, "event-uuid", "Event ID")}
+                        >
+                          {copiedId === "event-uuid" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </Button>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-muted/40">
+                        <span className="text-[10px] text-muted-foreground block">Registered At (Timestamp)</span>
+                        <span className="font-medium text-foreground text-xs">
+                          {selectedAttendee.createdAt ? format(new Date(selectedAttendee.createdAt), "PPP · p (zzzz)") : "—"}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-muted/40 flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block">Event Registration Link</span>
+                          <span className="font-medium text-foreground text-xs truncate block">{selectedAttendee.eventName}</span>
+                        </div>
+                        {selectedAttendee.eventSlug && (
+                          <a
+                            href={`/register/${selectedAttendee.eventSlug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline flex items-center gap-1 text-[11px] shrink-0"
+                          >
+                            <span>Open</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Primary Contact Card */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm p-4 rounded-xl bg-muted/40 border border-border/50">
+                    <div>
+                      <span className="text-[11px] text-muted-foreground block font-medium">Attendee Name</span>
+                      <span className="font-semibold text-foreground text-sm">{selectedAttendee.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-muted-foreground block font-medium">Email</span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-mono text-xs text-foreground truncate block">{selectedAttendee.email || "—"}</span>
+                        {selectedAttendee.email && (
+                          <button
+                            onClick={() => handleCopy(selectedAttendee.email, "email-copy", "Email")}
+                            className="text-muted-foreground hover:text-foreground shrink-0"
+                            title="Copy email"
+                          >
+                            {copiedId === "email-copy" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-muted-foreground block font-medium">Phone</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-foreground text-xs">{selectedAttendee.phone || "—"}</span>
+                        {selectedAttendee.phone && (
+                          <button
+                            onClick={() => handleCopy(selectedAttendee.phone, "phone-copy", "Phone")}
+                            className="text-muted-foreground hover:text-foreground shrink-0"
+                            title="Copy phone"
+                          >
+                            {copiedId === "phone-copy" ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-muted-foreground block font-medium">Host Account</span>
+                      <span className="text-xs text-foreground block truncate font-mono">{selectedAttendee.hostEmail}</span>
+                    </div>
+                  </div>
+
+                  {/* ── Problem Statement Track (if selected) ── */}
+                  {(selectedAttendee.data?.problem_statement_title || selectedAttendee.data?.["Problem Statement"]) && (
+                    <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-primary shrink-0" />
+                        <h4 className="font-semibold text-xs uppercase tracking-wider text-primary">
+                          Problem Statement Track
+                        </h4>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {selectedAttendee.data.problem_statement_code && (
+                            <span className="font-mono text-xs px-2 py-0.5 rounded font-bold bg-primary text-primary-foreground">
+                              {selectedAttendee.data.problem_statement_code}
+                            </span>
+                          )}
+                          <span className="font-medium text-sm text-foreground">
+                            {selectedAttendee.data.problem_statement_title || selectedAttendee.data["Problem Statement"]}
+                          </span>
+                        </div>
+                        {selectedAttendee.data.problem_statement_category && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Domain / Category: {selectedAttendee.data.problem_statement_category}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Academic Details (College, Department, Year, Roll No) ── */}
+                  {(selectedAttendee.college ||
+                    selectedAttendee.data?.["College / University"] ||
+                    selectedAttendee.data?.["Department / Branch"] ||
+                    selectedAttendee.data?.["Year of Study"] ||
+                    selectedAttendee.data?.["Roll Number / Student ID"]) && (
+                    <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                        <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                        <span>Academic & College Details</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        {(selectedAttendee.college || selectedAttendee.data?.["College / University"]) && (
+                          <div className="p-2.5 rounded-lg bg-muted/40">
+                            <span className="text-muted-foreground block text-[11px]">College / University</span>
+                            <span className="font-medium text-foreground">
+                              {selectedAttendee.college || selectedAttendee.data?.["College / University"]}
+                            </span>
+                          </div>
+                        )}
+                        {(selectedAttendee.department || selectedAttendee.data?.["Department / Branch"]) && (
+                          <div className="p-2.5 rounded-lg bg-muted/40">
+                            <span className="text-muted-foreground block text-[11px]">Department / Branch</span>
+                            <span className="font-medium text-foreground">
+                              {selectedAttendee.department || selectedAttendee.data?.["Department / Branch"]}
+                            </span>
+                          </div>
+                        )}
+                        {selectedAttendee.data?.["Year of Study"] && (
+                          <div className="p-2.5 rounded-lg bg-muted/40">
+                            <span className="text-muted-foreground block text-[11px]">Year of Study</span>
+                            <Badge variant="secondary" className="mt-1 font-semibold">
+                              {selectedAttendee.data["Year of Study"]}
+                            </Badge>
+                          </div>
+                        )}
+                        {selectedAttendee.data?.["Roll Number / Student ID"] && (
+                          <div className="p-2.5 rounded-lg bg-muted/40">
+                            <span className="text-muted-foreground block text-[11px]">Roll Number / Student ID</span>
+                            <span className="font-mono font-medium text-foreground mt-1 block">
+                              {selectedAttendee.data["Roll Number / Student ID"]}
+                            </span>
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
+                  )}
 
-              {/* ── Payment / Receipt Information ── */}
-              {(selectedAttendee.data?.razorpay_payment_id || selectedAttendee.data?.razorpay_order_id) && (
-                <div className="p-4 rounded-xl border border-border bg-card space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                    <CreditCard className="w-4 h-4 text-muted-foreground" />
-                    <span>Payment Information</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    {selectedAttendee.data.razorpay_payment_id && (
-                      <div className="p-2 rounded bg-muted/40">
-                        <span className="text-muted-foreground block text-[10px]">Payment ID</span>
-                        <span className="font-mono text-foreground font-medium">{selectedAttendee.data.razorpay_payment_id}</span>
-                      </div>
-                    )}
-                    {selectedAttendee.data.razorpay_order_id && (
-                      <div className="p-2 rounded bg-muted/40">
-                        <span className="text-muted-foreground block text-[10px]">Order ID</span>
-                        <span className="font-mono text-foreground font-medium">{selectedAttendee.data.razorpay_order_id}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Other Submitted Fields (excluding already presented) ── */}
-              <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Additional Submitted Details
-                </span>
-                <div className="border border-border rounded-xl p-3 text-xs bg-background space-y-1.5">
-                  {selectedAttendee.data &&
-                    Object.entries(selectedAttendee.data)
-                      .filter(
-                        ([key]) =>
-                          ![
-                            "team_members",
-                            "problem_statement_id",
-                            "problem_statement_code",
-                            "problem_statement_title",
-                            "problem_statement_category",
-                            "razorpay_order_id",
-                            "razorpay_payment_id",
-                            "razorpay_amount",
-                            "Full Name",
-                            "Email Address",
-                            "Phone Number",
-                            "College / University",
-                            "Department / Branch",
-                            "Year of Study",
-                            "Roll Number / Student ID",
-                          ].includes(key)
-                      )
-                      .map(([key, val]) => (
-                        <div key={key} className="flex items-start justify-between py-1 border-b border-border/40 last:border-0 gap-2">
-                          <span className="font-medium text-muted-foreground shrink-0">{key}:</span>
-                          <span className="font-medium text-foreground text-right break-all">
-                            {typeof val === "object" ? JSON.stringify(val) : String(val)}
-                          </span>
+                  {/* ── Team Members (Parsed & Styled) ── */}
+                  {Array.isArray(selectedAttendee.data?.team_members) && selectedAttendee.data.team_members.length > 0 && (
+                    <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-300">
+                          <Users className="w-4 h-4 text-emerald-600" />
+                          <span>Team Members ({selectedAttendee.data.team_members.length})</span>
                         </div>
-                      ))}
-                </div>
-              </div>
+                        <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
+                          {selectedAttendee.data.team_members.length + 1} Total in Team
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2">
+                        {selectedAttendee.data.team_members.map((member: any, idx: number) => (
+                          <div key={idx} className="p-3 rounded-lg border border-emerald-500/15 bg-background flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-6 h-6 rounded-full bg-emerald-500/15 text-emerald-700 font-bold flex items-center justify-center text-[10px] shrink-0">
+                                {idx + 1}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-foreground">{member.name}</span>
+                                <span className="text-muted-foreground font-mono ml-2">({member.email})</span>
+                              </div>
+                            </div>
+
+                            {(member.college || member.department) && (
+                              <div className="flex items-center gap-1.5 flex-wrap sm:justify-end">
+                                {member.college && (
+                                  <Badge variant="secondary" className="text-[10px] font-normal py-0">
+                                    {member.college}
+                                  </Badge>
+                                )}
+                                {member.department && (
+                                  <Badge variant="outline" className="text-[10px] font-normal py-0">
+                                    {member.department}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Payment / Receipt Information ── */}
+                  {(selectedAttendee.data?.razorpay_payment_id || selectedAttendee.data?.razorpay_order_id) && (
+                    <div className="p-4 rounded-xl border border-border bg-card space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                        <CreditCard className="w-4 h-4 text-muted-foreground" />
+                        <span>Payment Information</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {selectedAttendee.data.razorpay_payment_id && (
+                          <div className="p-2 rounded bg-muted/40">
+                            <span className="text-muted-foreground block text-[10px]">Payment ID</span>
+                            <span className="font-mono text-foreground font-medium">{selectedAttendee.data.razorpay_payment_id}</span>
+                          </div>
+                        )}
+                        {selectedAttendee.data.razorpay_order_id && (
+                          <div className="p-2 rounded bg-muted/40">
+                            <span className="text-muted-foreground block text-[10px]">Order ID</span>
+                            <span className="font-mono text-foreground font-medium">{selectedAttendee.data.razorpay_order_id}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Other Submitted Fields (excluding already presented) ── */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Additional Submitted Details
+                    </span>
+                    <div className="border border-border rounded-xl p-3 text-xs bg-background space-y-1.5">
+                      {selectedAttendee.data &&
+                        Object.entries(selectedAttendee.data)
+                          .filter(
+                            ([key]) =>
+                              ![
+                                "team_members",
+                                "problem_statement_id",
+                                "problem_statement_code",
+                                "problem_statement_title",
+                                "problem_statement_category",
+                                "razorpay_order_id",
+                                "razorpay_payment_id",
+                                "razorpay_amount",
+                                "Full Name",
+                                "Email Address",
+                                "Phone Number",
+                                "College / University",
+                                "Department / Branch",
+                                "Year of Study",
+                                "Roll Number / Student ID",
+                              ].includes(key)
+                          )
+                          .map(([key, val]) => (
+                            <div key={key} className="flex items-start justify-between py-1 border-b border-border/40 last:border-0 gap-2">
+                              <span className="font-medium text-muted-foreground shrink-0">{key}:</span>
+                              <span className="font-medium text-foreground text-right break-all">
+                                {typeof val === "object" ? JSON.stringify(val) : String(val)}
+                              </span>
+                            </div>
+                          ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </DialogContent>

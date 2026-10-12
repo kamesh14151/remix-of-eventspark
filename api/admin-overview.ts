@@ -240,6 +240,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         eventId: r.event_id,
         eventName: ev?.name || "Deleted Event",
         eventSlug: ev?.slug || "",
+        hostId: ev?.user_id || "",
         hostEmail: hostUser?.email || "Unknown",
         hostName: prof?.full_name || hostUser?.email?.split("@")[0] || "Host",
         name,
@@ -249,7 +250,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         department,
         status: r.status,
         createdAt: r.created_at,
-        data: r.data,
+        data: r.data || {},
+        rawRecord: r,
       };
     });
 
