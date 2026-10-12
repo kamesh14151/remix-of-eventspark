@@ -1236,15 +1236,15 @@ const Register = () => {
   // ─── SPLIT SCREEN ───
   if (template === "split") {
     return wrapDark(
-      <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
-        {/* Left: flyer image, date, event title, location & description */}
-        <div className="md:w-1/2 bg-muted/20 flex flex-col items-center justify-center p-8 md:p-12 relative overflow-hidden">
+      <div className="min-h-screen md:h-screen md:max-h-screen md:overflow-hidden flex flex-col md:flex-row bg-background text-foreground">
+        {/* Left: flyer image, date, event title, location & description — non-scrollable fixed on laptop */}
+        <div className="w-full md:w-1/2 md:h-screen md:overflow-hidden bg-muted/20 flex flex-col items-center justify-center p-6 md:p-8 lg:p-12 relative">
           <div className="absolute inset-0 bg-primary/5" />
-          <div className="relative z-10 flex flex-col items-center text-center max-w-lg w-full">
-            <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="w-32 h-32 sm:w-44 sm:h-44 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl mb-6" />
+          <div className="relative z-10 flex flex-col items-center text-center max-w-md lg:max-w-lg w-full my-auto">
+            <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-[1.75rem] lg:rounded-[2.25rem] shadow-xl mb-4 lg:mb-6" />
             {!flyerUrl && (
-              <div className="w-16 h-16 rounded-[1.25rem] flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
-                <Zap className="w-8 h-8 text-white" />
+              <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-[1.25rem] flex items-center justify-center mx-auto mb-3" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
+                <Zap className="w-7 h-7 text-white" />
               </div>
             )}
             <EventInfo
@@ -1256,9 +1256,9 @@ const Register = () => {
             />
           </div>
         </div>
-        {/* Right: form */}
-        <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
-          <div className="w-full max-w-md animate-in fade-in duration-300">
+        {/* Right: form — centered and contained on laptop */}
+        <div className="w-full md:w-1/2 md:h-screen md:overflow-y-auto flex items-center justify-center px-4 py-8 md:px-8 md:py-10 [scrollbar-width:thin]">
+          <div className="w-full max-w-md animate-in fade-in duration-300 my-auto">
             <RegistrationForm {...formProps} />
             <PoweredBy />
           </div>
