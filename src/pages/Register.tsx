@@ -391,19 +391,6 @@ const EventInfo = ({
         {event.location_value && <span className="font-medium text-foreground">· {event.location_value}</span>}
       </div>
 
-      {/* Student Hackathon Registration Banner — left side */}
-      {event.event_type === "hackathon" && (
-        <div className={`flex items-start gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary my-4 text-left max-w-md ${isCenter ? "mx-auto" : ""}`}>
-          <GraduationCap className="w-5 h-5 shrink-0 mt-0.5 text-primary" />
-          <div className="space-y-0.5">
-            <span className="font-semibold block text-sm">Student Hackathon Registration</span>
-            <span className="text-muted-foreground text-xs leading-relaxed block">
-              Please provide your college name, department, year of study, and academic details.
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Problem statements showcase tiles under hackathon name */}
       {problemStatements.length > 0 && (
         <ProblemStatementsShowcase
@@ -502,6 +489,19 @@ const RegistrationForm = ({
 
   return (
     <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
+      {/* Student Hackathon Banner */}
+      {isHackathon && (
+        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary mb-2">
+          <GraduationCap className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-semibold block text-sm">Student Hackathon Registration</span>
+            <span className="text-muted-foreground text-xs leading-relaxed block">
+              Please provide your college name, department, year of study, and academic details.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Problem Statement Track Selector */}
       {problemStatements && problemStatements.length > 0 && (
         <div className="space-y-2 p-3.5 rounded-xl bg-primary/5 border border-primary/20">
@@ -1163,7 +1163,8 @@ const Register = () => {
   };
 
   const brandColor = event.primary_color || "#7C3AED";
-  const template = event.template || "split";
+  // Locked to Split Screen layout for all events
+  const template = "split";
   const flyerUrl = event.background_image_url;
   const isDark = (event as any).color_mode === "dark";
 

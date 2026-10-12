@@ -154,7 +154,7 @@ const CreateEvent = () => {
       setDescription(existingEvent.description || "");
       setEventType(existingEvent.event_type || "webinar");
       setTimezone(existingEvent.timezone || "America/New_York");
-      setSelectedTemplate(existingEvent.template || "split");
+      setSelectedTemplate("split");
       setColorMode((existingEvent as any).color_mode === "light" ? "light" : "dark");
       setRequiresApproval(existingEvent.requires_approval || false);
       setCapacity(existingEvent.capacity ? String(existingEvent.capacity) : "");
@@ -976,30 +976,25 @@ const CreateEvent = () => {
 
               <Card>
                 <CardContent className="p-6 space-y-4">
-                  <div>
-                    <h3 className="font-display font-semibold text-base mb-0.5">Choose a Template</h3>
-                    <p className="text-xs text-muted-foreground">Pick the layout for your public registration page.</p>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <h3 className="font-display font-semibold text-base mb-0.5">Template Layout</h3>
+                      <p className="text-xs text-muted-foreground">Standardized high-conversion Split Screen layout for all events.</p>
+                    </div>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs py-1 px-2.5">
+                      🔒 Split Screen (Locked)
+                    </Badge>
                   </div>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {templates.map((t) => (
-                      <div
-                        key={t.id}
-                        className={`cursor-pointer rounded-xl p-4 text-center transition-all hover:shadow-md border-2 ${
-                          selectedTemplate === t.id
-                            ? "border-primary bg-primary/5"
-                            : "border-border bg-card hover:border-muted-foreground/30"
-                        }`}
-                        onClick={() => setSelectedTemplate(t.id)}
-                      >
-                        <div className={`w-12 h-12 rounded-xl mx-auto mb-3 flex items-center justify-center ${
-                          selectedTemplate === t.id ? "bg-primary" : "bg-muted"
-                        }`}>
-                          <t.icon className={`w-6 h-6 ${selectedTemplate === t.id ? "text-primary-foreground" : "text-muted-foreground"}`} />
-                        </div>
-                        <h3 className="font-semibold text-sm mb-0.5">{t.name}</h3>
-                        <p className="text-xs text-muted-foreground">{t.description}</p>
-                      </div>
-                    ))}
+                  <div className="rounded-xl p-4 border-2 border-primary bg-primary/5 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary shrink-0">
+                      <Columns2 className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm mb-0.5">Split Screen</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Clean side-by-side layout: left side displays event flyer, title, date, location & guidelines, while the right side delivers a streamlined registration form.
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

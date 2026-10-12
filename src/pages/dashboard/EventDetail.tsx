@@ -181,14 +181,10 @@ const EventDetail = () => {
               </div>
               <div className="space-y-2">
                 <Label>Template</Label>
-                <Select defaultValue={event.template || "split"} onValueChange={v => handleUpdate({ template: v })}>
-                  <SelectTrigger className="rounded-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="split">Split screen</SelectItem>
-                    <SelectItem value="minimal">Minimal</SelectItem>
-                    <SelectItem value="landing">Landing page</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2 h-10 px-4 rounded-full border border-border bg-muted/40 text-xs font-medium text-foreground">
+                  <span>🔒 Split screen</span>
+                  <Badge variant="outline" className="ml-auto text-[10px] bg-primary/10 text-primary border-primary/20">Standard (Locked)</Badge>
+                </div>
               </div>
             </div>
             <div className="space-y-2">
