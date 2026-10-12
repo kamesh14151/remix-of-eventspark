@@ -25,6 +25,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const { 
+      type, 
+      email, 
+      emails, 
+      name, 
+      loginTime, 
+      browser, 
+      eventTitle, 
+      hostName, 
+      teamMembers, 
+      subject: customSubject, 
+      message, 
+      flyerUrl, 
+      eventDate, 
+      eventLocation, 
+      eventEndDate, 
+      eventTimezone,
+      whatsappGroupUrl
+    } = req.body || {};
+
+    const defaultWhatsappGroup = "https://chat.whatsapp.com/HHkiFng9E0KHsTBuT3qPcK?s=sw&p=a&mlu=4&ilr=4&iam=2";
+    const targetWhatsappUrl = whatsappGroupUrl || defaultWhatsappGroup;
+
     const effectiveSenderName = (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") || eventTitle || "Crack";
     const safeSenderName = effectiveSenderName.replace(/["\r\n]/g, "").trim() || "Crack";
     const targetHostName = (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") || eventTitle || "Crack";
@@ -226,6 +249,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     <p style="font-size: 14px; color: #4B5563; margin: 0;">Your team members have been successfully registered. Check the attached receipt for details.</p>
                   </div>
                 ` : ''}
+
+                <div style="margin-top: 28px; padding: 22px; background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%); border: 1.5px solid #10B981; border-radius: 12px; text-align: center;">
+                  <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background-color: #25D366; color: #ffffff; font-size: 22px; margin-bottom: 10px;">
+                    💬
+                  </div>
+                  <h3 style="font-size: 17px; font-weight: 700; color: #065F46; margin: 0 0 6px 0;">
+                    Join Event WhatsApp Group
+                  </h3>
+                  <p style="font-size: 14px; color: #047857; margin: 0 0 16px 0; line-height: 20px;">
+                    Follow this link to join the official WhatsApp group for live announcements, schedules, and team coordination:
+                  </p>
+                  <div style="margin-bottom: 14px;">
+                    <a href="${targetWhatsappUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; font-weight: 700; font-size: 15px; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 4px 10px rgba(37,211,102,0.3);">
+                      Follow this link to join my WhatsApp group
+                    </a>
+                  </div>
+                  <p style="font-size: 12px; color: #059669; margin: 0; word-break: break-all;">
+                    <a href="${targetWhatsappUrl}" style="color: #047857; text-decoration: underline;">${targetWhatsappUrl}</a>
+                  </p>
+                </div>
               </div>
               ${creditsHtml}
             </div>

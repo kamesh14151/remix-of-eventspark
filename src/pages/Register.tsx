@@ -4,8 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy, Target, Sparkles, AlertCircle, Info } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Plus, Trash2, Users, GraduationCap, School, Copy, Target, Sparkles, AlertCircle, Info, ExternalLink, Check } from "lucide-react";
 import { useEventBySlug, Event, ProblemStatement } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
@@ -72,6 +71,14 @@ function formatEventDateTime(event: Event) {
 
 // ─── Extracted stable components ───
 
+const DEFAULT_WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/HHkiFng9E0KHsTBuT3qPcK?s=sw&p=a&mlu=4&ilr=4&iam=2";
+
+const WhatsAppIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.529 1.777.813 2.796.813 3.179 0 5.767-2.587 5.767-5.766.001-3.182-2.585-5.8-5.767-5.8zm3.364 8.167c-.14.391-.715.717-1.02.756-.298.038-.592.052-.909-.036-.317-.089-.908-.293-1.76-.669-1.704-.753-2.848-2.506-2.933-2.622-.085-.116-.685-.913-.685-1.741 0-.829.434-1.238.588-1.406.154-.168.337-.21.45-.21.113 0 .225.002.321.006.103.005.24-.038.374.285.138.331.47 1.146.511 1.231.041.084.068.183.013.292-.055.109-.084.178-.167.275-.084.098-.176.219-.251.294-.084.084-.171.176-.074.343.097.167.434.716.931 1.158.64.57 1.179.746 1.346.83.168.084.267.07.364-.042.098-.112.42-.49.532-.658.112-.168.224-.14.378-.083.154.056.978.461 1.146.545.168.084.28.126.322.196.042.07.042.406-.098.797zm-3.364-10.339c6.627 0 12 5.373 12 12 0 6.627-5.373 12-12 12-2.079 0-4.041-.53-5.766-1.465l-6.234 1.635 1.666-6.087c-1.055-1.802-1.666-3.896-1.666-6.083 0-6.627 5.373-12 12-12z" />
+  </svg>
+);
+
 const SuccessCard = ({
   brandColor,
   event,
@@ -82,60 +89,162 @@ const SuccessCard = ({
   event: Event;
   teamMembers: TeamMember[];
   selectedProblemStatement?: ProblemStatement | null;
-}) => (
-  <div key="success" className="w-full max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-300">
-    <Card className="border-border shadow-2xl">
-      <CardContent className="p-8 text-center">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
-          <CheckCircle2 className="w-16 h-16 mx-auto mb-4" style={{ color: brandColor }} />
-        </motion.div>
-        <h2 className="text-2xl font-display font-bold mb-2">You're Registered!</h2>
-        <p className="text-muted-foreground">Thank you for registering for <strong>{event.name}</strong>. You'll receive a confirmation email shortly.</p>
-        <div className="mt-6 border-t border-border pt-5 text-left space-y-4">
-          {selectedProblemStatement && (
-            <div className="flex items-start gap-3 text-sm p-3.5 rounded-xl bg-primary/10 border border-primary/20">
-              <Target className="w-4 h-4 mt-0.5 text-primary shrink-0" />
-              <div className="min-w-0">
-                <p className="font-semibold text-primary text-xs uppercase tracking-wider">Problem Statement Track</p>
-                <p className="font-medium text-foreground mt-0.5">
-                  {selectedProblemStatement.code ? `${selectedProblemStatement.code} · ` : ""}{selectedProblemStatement.title}
+}) => {
+  const whatsappUrl = (event as any).whatsapp_group_url || (event as any).whatsapp_url || DEFAULT_WHATSAPP_GROUP_URL;
+  const [countdown, setCountdown] = useState<number>(3);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [hasOpened, setHasOpened] = useState<boolean>(false);
+
+  useEffect(() => {
+    let fired = false;
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          if (!fired) {
+            fired = true;
+            try {
+              window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+              setHasOpened(true);
+            } catch {
+              setHasOpened(false);
+            }
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [whatsappUrl]);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(whatsappUrl);
+    setCopied(true);
+    toast.success("WhatsApp group link copied!");
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleOpenLink = () => {
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    setHasOpened(true);
+  };
+
+  return (
+    <div key="success" className="w-full max-w-lg mx-auto animate-in fade-in zoom-in-95 duration-300">
+      <Card className="border-border shadow-2xl">
+        <CardContent className="p-8 text-center">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
+            <CheckCircle2 className="w-16 h-16 mx-auto mb-4" style={{ color: brandColor }} />
+          </motion.div>
+          <h2 className="text-2xl font-display font-bold mb-2">You're Registered!</h2>
+          <p className="text-muted-foreground">Thank you for registering for <strong>{event.name}</strong>. You'll receive a confirmation email shortly.</p>
+
+          {/* ── WhatsApp Group Auto-Join Callout ── */}
+          <div className="mt-6 p-4 sm:p-5 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent dark:from-emerald-950/30 dark:border-emerald-500/40 text-left shadow-lg">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#25D366]/30">
+                <WhatsAppIcon className="w-6 h-6 fill-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="font-bold text-sm sm:text-base text-emerald-900 dark:text-emerald-300">
+                    Join Official WhatsApp Group
+                  </span>
+                  {countdown > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                      Auto-joining in {countdown}s
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      ✓ Join Link Ready
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-emerald-800/80 dark:text-emerald-300/80 mt-1">
+                  Follow this link to join my WhatsApp group for urgent event announcements, rules & coordination:
                 </p>
-                {selectedProblemStatement.category && (
-                  <p className="text-xs text-muted-foreground mt-0.5">Domain: {selectedProblemStatement.category}</p>
-                )}
               </div>
             </div>
-          )}
-          {formatEventDateTime(event) && (
-            <div className="flex items-start gap-3 text-sm">
-              <CalendarDays className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-              <div><p className="font-medium">Date and time</p><p className="text-muted-foreground">{formatEventDateTime(event)}</p></div>
+
+            <div className="mt-3.5 flex flex-col sm:flex-row gap-2">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleOpenLink}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-semibold text-sm transition-all shadow-md hover:shadow-lg hover:shadow-[#25D366]/25 active:scale-[0.98]"
+              >
+                <WhatsAppIcon className="w-4 h-4 fill-white" />
+                <span>Follow this link to join my WhatsApp group</span>
+                <ExternalLink className="w-3.5 h-3.5 ml-0.5" />
+              </a>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+                className="border-emerald-500/30 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/10 h-10 px-3.5 rounded-xl"
+              >
+                {copied ? <Check className="w-4 h-4 mr-1 text-emerald-600" /> : <Copy className="w-4 h-4 mr-1" />}
+                {copied ? "Copied" : "Copy Link"}
+              </Button>
             </div>
-          )}
-          <div className="flex items-start gap-3 text-sm">
-            {event.location_type === "physical" ? <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" /> : event.location_type === "hybrid" ? <Globe className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" /> : <Video className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />}
-            <div className="min-w-0"><p className="font-medium">{event.location_type === "physical" ? "Venue" : event.location_type === "hybrid" ? "Venue and online" : "Online location"}</p><p className="text-muted-foreground break-words">{event.location_value || (event.location_type === "physical" ? "Location details will be shared by the host." : "Online details will be shared by the host.")}</p></div>
+
+            <div className="mt-2.5 pt-2 border-t border-emerald-500/15 flex items-center justify-between text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
+              <span className="truncate mr-2 font-mono">{whatsappUrl}</span>
+              <span className="shrink-0 text-muted-foreground font-medium">Auto-join enabled</span>
+            </div>
           </div>
-          {teamMembers.length > 0 && (
-            <div className="flex items-start gap-3 text-sm">
-              <Users className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-              <div className="min-w-0">
-                <p className="font-medium">Team members ({teamMembers.length})</p>
-                <ul className="mt-1 space-y-1 text-muted-foreground">
-                  {teamMembers.map((member, index) => (
-                    <li key={`${member.email}-${index}`} className="break-words">
-                      {member.name} ({member.email}){member.college ? ` · ${member.college}` : ""}{member.department ? ` (${member.department})` : ""}
-                    </li>
-                  ))}
-                </ul>
+
+          <div className="mt-6 border-t border-border pt-5 text-left space-y-4">
+            {selectedProblemStatement && (
+              <div className="flex items-start gap-3 text-sm p-3.5 rounded-xl bg-primary/10 border border-primary/20">
+                <Target className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-primary text-xs uppercase tracking-wider">Problem Statement Track</p>
+                  <p className="font-medium text-foreground mt-0.5">
+                    {selectedProblemStatement.code ? `${selectedProblemStatement.code} · ` : ""}{selectedProblemStatement.title}
+                  </p>
+                  {selectedProblemStatement.category && (
+                    <p className="text-xs text-muted-foreground mt-0.5">Domain: {selectedProblemStatement.category}</p>
+                  )}
+                </div>
               </div>
+            )}
+            {formatEventDateTime(event) && (
+              <div className="flex items-start gap-3 text-sm">
+                <CalendarDays className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div><p className="font-medium">Date and time</p><p className="text-muted-foreground">{formatEventDateTime(event)}</p></div>
+              </div>
+            )}
+            <div className="flex items-start gap-3 text-sm">
+              {event.location_type === "physical" ? <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" /> : event.location_type === "hybrid" ? <Globe className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" /> : <Video className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />}
+              <div className="min-w-0"><p className="font-medium">{event.location_type === "physical" ? "Venue" : event.location_type === "hybrid" ? "Venue and online" : "Online location"}</p><p className="text-muted-foreground break-words">{event.location_value || (event.location_type === "physical" ? "Location details will be shared by the host." : "Online details will be shared by the host.")}</p></div>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-);
+            {teamMembers.length > 0 && (
+              <div className="flex items-start gap-3 text-sm">
+                <Users className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-medium">Team members ({teamMembers.length})</p>
+                  <ul className="mt-1 space-y-1 text-muted-foreground">
+                    {teamMembers.map((member, index) => (
+                      <li key={`${member.email}-${index}`} className="break-words">
+                        {member.name} ({member.email}){member.college ? ` · ${member.college}` : ""}{member.department ? ` (${member.department})` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const CompactLogo = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string | null; eventName: string; className?: string }) => (
   flyerUrl ? (
@@ -879,7 +988,8 @@ const Register = () => {
             ticketPrice: event.ticket_price || 0,
             teamPricing: event.team_pricing || "",
             teamMembers: teamMembers.length > 0 ? teamMembers : undefined,
-            flyerUrl: event.background_image_url
+            flyerUrl: event.background_image_url,
+            whatsappGroupUrl: (event as any).whatsapp_group_url || (event as any).whatsapp_url || DEFAULT_WHATSAPP_GROUP_URL,
           })
         }).catch(e => console.error("Failed to send registration email:", e));
       }

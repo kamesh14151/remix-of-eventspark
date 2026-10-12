@@ -80,6 +80,22 @@ serve(async (req: Request) => {
             <p>Thank you for registering. We look forward to seeing you.</p>
             ${event.event_date ? `<p><strong>Date:</strong> ${new Date(event.event_date).toLocaleString()}</p>` : ""}
             ${event.location_value ? `<p><strong>Location/Link:</strong> ${event.location_value}</p>` : ""}
+            <div style="margin-top: 24px; padding: 20px; background-color: #ECFDF5; border: 1.5px solid #10B981; border-radius: 12px; text-align: center;">
+              <h3 style="font-size: 16px; font-weight: 700; color: #065F46; margin: 0 0 6px 0;">
+                Join Official WhatsApp Group
+              </h3>
+              <p style="font-size: 14px; color: #047857; margin: 0 0 16px 0;">
+                Follow this link to join my WhatsApp group:
+              </p>
+              <div style="margin-bottom: 12px;">
+                <a href="https://chat.whatsapp.com/HHkiFng9E0KHsTBuT3qPcK?s=sw&p=a&mlu=4&ilr=4&iam=2" target="_blank" style="display: inline-block; background-color: #25D366; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none; padding: 12px 24px; border-radius: 8px;">
+                  Follow this link to join my WhatsApp group
+                </a>
+              </div>
+              <p style="font-size: 12px; color: #059669; margin: 0;">
+                https://chat.whatsapp.com/HHkiFng9E0KHsTBuT3qPcK?s=sw&p=a&mlu=4&ilr=4&iam=2
+              </p>
+            </div>
             <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #eaeaea; text-align: center;">
               <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
                 <tr>
