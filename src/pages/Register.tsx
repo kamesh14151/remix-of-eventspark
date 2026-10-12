@@ -483,15 +483,15 @@ const RegistrationForm = ({
   };
 
   return (
-    <form onSubmit={onSubmit} className={`space-y-3.5 ${className}`}>
+    <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
       {/* Student Hackathon Banner */}
       {isHackathon && (
-        <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary">
-          <GraduationCap className="w-4 h-4 shrink-0" />
-          <div className="flex-1">
-            <span className="font-semibold block text-xs">Student Hackathon Registration</span>
-            <span className="text-muted-foreground text-[11px] leading-tight block">
-              Enter your college, department, and academic details below.
+        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary mb-2">
+          <GraduationCap className="w-5 h-5 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-semibold block text-sm">Student Hackathon Registration</span>
+            <span className="text-muted-foreground text-xs leading-relaxed block">
+              Please provide your college name, department, year of study, and academic details.
             </span>
           </div>
         </div>
@@ -499,12 +499,12 @@ const RegistrationForm = ({
 
       {/* Problem Statement Track Selector */}
       {problemStatements && problemStatements.length > 0 && (
-        <div className="space-y-1.5 p-2.5 rounded-xl bg-primary/5 border border-primary/20">
+        <div className="space-y-2 p-3.5 rounded-xl bg-primary/5 border border-primary/20">
           <div className="flex items-center justify-between">
-            <Label className="text-[11px] font-semibold flex items-center gap-1.5 text-foreground">
+            <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
               <Target className="w-3.5 h-3.5 text-primary" /> Choose Problem Statement Track <span className="text-destructive">*</span>
             </Label>
-            <span className="text-[10px] text-muted-foreground font-mono">{problemStatements.length} Tracks</span>
+            <span className="text-[10px] text-muted-foreground font-mono">{problemStatements.length} Tracks Available</span>
           </div>
           <select
             value={selectedProblemStatement?.id || ""}
@@ -514,7 +514,7 @@ const RegistrationForm = ({
                 onSelectProblemStatement(found);
               }
             }}
-            className="h-9 text-xs rounded-lg w-full border border-input bg-background px-2.5 py-1.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer"
+            className="h-10 text-sm rounded-xl w-full border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer"
             required
           >
             <option value="" disabled>-- Select Your Problem Statement Track --</option>
@@ -526,106 +526,100 @@ const RegistrationForm = ({
           </select>
 
           {selectedProblemStatement && (
-            <div className="p-2 rounded-lg bg-background/80 border border-primary/20 text-xs space-y-0.5 animate-in fade-in duration-200">
-              <div className="flex items-center gap-1.5">
-                <span className="font-mono text-[9px] px-1 py-0.5 rounded bg-primary text-primary-foreground font-semibold">
+            <div className="p-2.5 rounded-lg bg-background/80 border border-primary/20 text-xs space-y-1 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-primary text-primary-foreground font-semibold">
                   {selectedProblemStatement.code || "PS"}
                 </span>
-                <span className="font-semibold text-foreground text-xs truncate">
+                <span className="font-semibold text-foreground truncate">
                   {selectedProblemStatement.title}
                 </span>
               </div>
-              {selectedProblemStatement.description && (
-                <p className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed">
-                  {selectedProblemStatement.description}
-                </p>
-              )}
+              <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                {selectedProblemStatement.description}
+              </p>
             </div>
           )}
         </div>
       )}
 
-      {/* ── Responsive 2-Column Inputs Grid ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        {formFields?.map((field) => {
-          const isYearField = /year of study|academic year/i.test(field.label);
-          const isDeptField = /department|branch|stream/i.test(field.label);
-          const isCollegeField = /college|university|clg|institution/i.test(field.label);
-          const isRollNoField = /roll number|student id|roll no|reg no/i.test(field.label);
-          const isGithubField = /github|portfolio/i.test(field.label);
-          const isFullWidth = isCollegeField || field.field_type === "textarea" || (field.label && field.label.length > 30);
+      {formFields?.map((field) => {
+        const isYearField = /year of study|academic year/i.test(field.label);
+        const isDeptField = /department|branch|stream/i.test(field.label);
+        const isCollegeField = /college|university|clg|institution/i.test(field.label);
+        const isRollNoField = /roll number|student id|roll no|reg no/i.test(field.label);
+        const isGithubField = /github|portfolio/i.test(field.label);
 
-          return (
-            <div key={field.id} className={`space-y-1 ${isFullWidth ? "sm:col-span-2" : "sm:col-span-1"}`}>
-              <Label className="text-[11px] font-medium flex items-center gap-1 text-foreground/90">
-                {isCollegeField && <School className="w-3 h-3 text-primary shrink-0" />}
-                {isYearField && <GraduationCap className="w-3 h-3 text-primary shrink-0" />}
-                <span>{field.label}</span>
-                {field.required && <span className="text-destructive">*</span>}
-              </Label>
+        return (
+          <div key={field.id} className="space-y-2">
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              {isCollegeField && <School className="w-3.5 h-3.5 text-primary shrink-0" />}
+              {isYearField && <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" />}
+              <span>{field.label}</span>
+              {field.required && <span className="text-destructive">*</span>}
+            </Label>
 
-              {/* Quick-select pills for Year of Study */}
-              {isYearField && (
-                <div className="flex flex-wrap gap-1 pb-0.5">
-                  {yearOfStudyOptions.map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => onFieldChange(field.label, opt)}
-                      className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
-                        formData[field.label] === opt
-                          ? "bg-primary text-primary-foreground border-primary font-medium shadow-xs"
-                          : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {isCollegeField ? (
-                <CollegeSelect
-                  value={formData[field.label] || ""}
-                  onChange={(val) => onFieldChange(field.label, val)}
-                  required={field.required}
-                  placeholder={field.placeholder || "Select College / University"}
-                  size="sm"
-                />
-              ) : isDeptField ? (
-                <DepartmentSelect
-                  value={formData[field.label] || ""}
-                  onChange={(val) => onFieldChange(field.label, val)}
-                  required={field.required}
-                  placeholder={field.placeholder || "Select Department / Branch"}
-                  size="sm"
-                />
-              ) : (
-                <div className="space-y-0.5">
-                  <Input
-                    type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
-                    placeholder={field.placeholder || field.label}
-                    required={field.required}
-                    value={formData[field.label] || ""}
-                    onChange={(e) => onFieldChange(field.label, e.target.value)}
-                    className={`h-9 text-xs rounded-lg ${
-                      emailConflictError && field.field_type === "email"
-                        ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-500/5"
-                        : ""
+            {/* Quick-select pills for Year of Study */}
+            {isYearField && (
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                {yearOfStudyOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => onFieldChange(field.label, opt)}
+                    className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${
+                      formData[field.label] === opt
+                        ? "bg-primary text-primary-foreground border-primary font-medium shadow-sm"
+                        : "bg-muted/40 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
-                  />
-                  {emailConflictError && field.field_type === "email" && (
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium pt-0.5">
-                      <AlertCircle className="w-3 h-3 shrink-0" />
-                      Already registered for this event. Please use a different email address.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {isCollegeField ? (
+              <CollegeSelect
+                value={formData[field.label] || ""}
+                onChange={(val) => onFieldChange(field.label, val)}
+                required={field.required}
+                placeholder={field.placeholder || "Select College / University"}
+                size="md"
+              />
+            ) : isDeptField ? (
+              <DepartmentSelect
+                value={formData[field.label] || ""}
+                onChange={(val) => onFieldChange(field.label, val)}
+                required={field.required}
+                placeholder={field.placeholder || "Select Department / Branch"}
+                size="md"
+              />
+            ) : (
+              <div className="space-y-1">
+                <Input
+                  type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
+                  placeholder={field.placeholder || field.label}
+                  required={field.required}
+                  value={formData[field.label] || ""}
+                  onChange={e => onFieldChange(field.label, e.target.value)}
+                  className={`h-10 text-sm rounded-xl ${
+                    emailConflictError && field.field_type === "email"
+                      ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-500/5"
+                      : ""
+                  }`}
+                />
+                {emailConflictError && field.field_type === "email" && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium pt-0.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    Already registered for this event. Please use a different email address.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {maxTeamSize && maxTeamSize > 1 && teamMembers && onTeamMembersChange && (
         <div className="pt-4 mt-4 border-t border-border">
@@ -792,7 +786,7 @@ const FlyerImage = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string 
 );
 
 const PoweredBy = () => (
-  <div className="flex items-center justify-center gap-1.5 mt-3 text-[11px] text-muted-foreground flex-wrap select-none">
+  <div className="flex items-center justify-center gap-1.5 mt-6 text-xs text-muted-foreground flex-wrap select-none">
     <span>Powered by</span>
     <img
       src="/Crack.png"
@@ -800,7 +794,7 @@ const PoweredBy = () => (
       className="h-3.5 w-auto object-contain inline-block shrink-0"
       style={{ height: "14px", width: "auto", maxHeight: "14px" }}
     />
-    <span className="text-[9px] font-bold tracking-wider text-muted-foreground/60 uppercase">BY</span>
+    <span className="text-[10px] font-semibold tracking-wider text-muted-foreground/70 uppercase">BY</span>
     <img
       src="/aj-logo.png"
       alt="AJ STUDIOZ"
@@ -1204,15 +1198,15 @@ const Register = () => {
   if (template === "minimal") {
     return wrapDark(
       <div className="min-h-screen relative bg-background text-foreground">
-        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}12, ${brandColor}03)` }} />
-        <div className="relative min-h-screen flex items-center justify-center px-4 py-8 sm:py-12">
-          <div className="w-full max-w-xl animate-in fade-in duration-300">
-            <Card className="border-border shadow-xl rounded-2xl">
-              <CardContent className="p-5 sm:p-7">
-                <div className="text-center mb-5">
-                  <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="mx-auto mb-4 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl shadow-md" />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}15, ${brandColor}05)` }} />
+        <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-lg animate-in fade-in duration-300">
+            <Card className="border-border shadow-2xl">
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="mx-auto mb-6" />
                   {!flyerUrl && (
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
+                    <div className="w-12 h-12 rounded-[1rem] flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
                       <Zap className="w-6 h-6 text-white" />
                     </div>
                   )}
@@ -1235,98 +1229,31 @@ const Register = () => {
   // ─── SPLIT SCREEN ───
   if (template === "split") {
     return wrapDark(
-      <div className="min-h-screen flex flex-col lg:flex-row bg-background text-foreground">
-        {/* Left: Event Details & Overview */}
-        <div
-          className="lg:w-5/12 bg-muted/20 border-b lg:border-b-0 lg:border-r border-border/60 flex flex-col justify-between p-6 sm:p-8 lg:p-10 relative overflow-y-auto"
-          style={{ background: isDark ? undefined : `linear-gradient(145deg, ${brandColor}0F, ${brandColor}03)` }}
-        >
-          <div className="relative z-10 space-y-5">
-            <div className="flex items-center gap-3">
-              <CompactLogo
-                flyerUrl={flyerUrl}
-                eventName={event.name}
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl shadow-md border border-border/40 shrink-0"
-              />
-              <div>
-                <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wider text-primary border-primary/30">
-                  {isHackathon ? "Hackathon" : "Event"}
-                </Badge>
-                {event.event_date && (
-                  <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                    <CalendarDays className="w-3.5 h-3.5 shrink-0" />
-                    <span>{formatEventDateTime(event)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground tracking-tight">
-                {event.name}
-              </h1>
-              {event.description && (
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  {event.description}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted border border-border/60 text-muted-foreground">
-                {event.location_type === "physical" ? <MapPin className="w-3.5 h-3.5" /> : event.location_type === "hybrid" ? <Globe className="w-3.5 h-3.5" /> : <Video className="w-3.5 h-3.5" />}
-                <span className="capitalize">{event.location_type || "Online"}</span>
-                {event.location_value && <span className="font-medium text-foreground">· {event.location_value}</span>}
-              </div>
-
-              {event.ticket_price && event.ticket_price > 0 ? (
-                <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium">
-                  ₹{event.ticket_price}
-                </div>
-              ) : (
-                <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-medium">
-                  Free
-                </div>
-              )}
-            </div>
-
-            {/* Problem Statements list if published */}
-            {publishedProblemStatements.length > 0 && (
-              <div className="pt-2">
-                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-2">
-                  Problem Statements ({publishedProblemStatements.length})
-                </span>
-                <ProblemStatementsShowcase
-                  statements={publishedProblemStatements}
-                  selectedId={selectedProblemStatement?.id}
-                  onSelect={setSelectedProblemStatement}
-                />
+      <div className="min-h-screen flex flex-col md:flex-row bg-background text-foreground">
+        {/* Left: flyer image — top-aligned on mobile */}
+        <div className="md:w-1/2 bg-muted/20 flex flex-col items-center justify-center p-8 md:p-12 relative overflow-hidden">
+          <div className="absolute inset-0 bg-primary/5" />
+          <div className="relative z-10 flex flex-col items-center">
+            <CompactLogo flyerUrl={flyerUrl} eventName={event.name} className="w-32 h-32 sm:w-48 sm:h-48 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl mb-8" />
+            {!flyerUrl && (
+              <div className="w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4" style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}>
+                <Zap className="w-10 h-10 text-white" />
               </div>
             )}
-          </div>
-
-          <div className="pt-6 relative z-10 hidden lg:block">
-            <PoweredBy />
+            <h2 className="text-3xl font-display font-bold text-center mt-2">{event.name}</h2>
           </div>
         </div>
-
-        {/* Right: Registration Form Column */}
-        <div className="lg:w-7/12 flex-1 px-4 py-6 sm:px-8 sm:py-8 flex flex-col justify-start">
-          <div className="w-full max-w-xl mx-auto space-y-4 animate-in fade-in duration-300">
-            <div className="pb-2 border-b border-border/50">
-              <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground">
-                Participant Registration
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Fill in your details to secure your spot
-              </p>
-            </div>
-
+        {/* Right: form */}
+        <div className="md:w-1/2 flex items-center justify-center px-4 py-8 md:px-8 md:py-12">
+          <div className="w-full max-w-md animate-in fade-in duration-300">
+            <EventInfo
+              event={event}
+              className="mb-8"
+              selectedProblemStatementId={selectedProblemStatement?.id}
+              onSelectProblemStatement={setSelectedProblemStatement}
+            />
             <RegistrationForm {...formProps} />
-
-            <div className="block lg:hidden pt-2">
-              <PoweredBy />
-            </div>
+            <PoweredBy />
           </div>
         </div>
       </div>
