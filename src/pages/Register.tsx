@@ -391,6 +391,19 @@ const EventInfo = ({
         {event.location_value && <span className="font-medium text-foreground">· {event.location_value}</span>}
       </div>
 
+      {/* Student Hackathon Registration Banner — left side */}
+      {event.event_type === "hackathon" && (
+        <div className={`flex items-start gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary my-4 text-left max-w-md ${isCenter ? "mx-auto" : ""}`}>
+          <GraduationCap className="w-5 h-5 shrink-0 mt-0.5 text-primary" />
+          <div className="space-y-0.5">
+            <span className="font-semibold block text-sm">Student Hackathon Registration</span>
+            <span className="text-muted-foreground text-xs leading-relaxed block">
+              Please provide your college name, department, year of study, and academic details.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Problem statements showcase tiles under hackathon name */}
       {problemStatements.length > 0 && (
         <ProblemStatementsShowcase
@@ -489,19 +502,6 @@ const RegistrationForm = ({
 
   return (
     <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
-      {/* Student Hackathon Banner */}
-      {isHackathon && (
-        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary mb-2">
-          <GraduationCap className="w-5 h-5 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <span className="font-semibold block text-sm">Student Hackathon Registration</span>
-            <span className="text-muted-foreground text-xs leading-relaxed block">
-              Please provide your college name, department, year of study, and academic details.
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Problem Statement Track Selector */}
       {problemStatements && problemStatements.length > 0 && (
         <div className="space-y-2 p-3.5 rounded-xl bg-primary/5 border border-primary/20">
@@ -862,65 +862,64 @@ const Register = () => {
 
   const effectiveFormFields = useMemo(() => {
     if (!event) return formFields;
-    if (!isHackathon) return formFields;
 
-    if (!formFields || formFields.length <= 2) {
-      return studentHackathonFields.map((f, i) => ({
-        id: `student-field-${i}`,
-        event_id: event.id,
-        label: f.label,
-        field_type: f.field_type,
-        required: f.required,
-        position: i,
-        placeholder: f.placeholder || null,
-      })) as FormField[];
+    let fields = formFields || [];
+    if (isHackathon) {
+      if (!formFields || formFields.length <= 2) {
+        fields = studentHackathonFields.map((f, i) => ({
+          id: `student-field-${i}`,
+          event_id: event.id,
+          label: f.label,
+          field_type: f.field_type,
+          required: f.required,
+          position: i,
+          placeholder: f.placeholder || null,
+        })) as FormField[];
+      } else {
+        const hasCollege = formFields.some(f => /college|university|clg|institution/i.test(f.label));
+        const hasDept = formFields.some(f => /department|dept|branch/i.test(f.label));
+        const hasYear = formFields.some(f => /year of study|academic year/i.test(f.label));
+
+        const extra: FormField[] = [];
+        if (!hasCollege) {
+          extra.push({
+            id: "student-college-injected",
+            event_id: event.id,
+            label: "College / University",
+            field_type: "text",
+            required: true,
+            position: formFields.length,
+            placeholder: "e.g. Stanford University / IIT Madras",
+          } as FormField);
+        }
+        if (!hasDept) {
+          extra.push({
+            id: "student-dept-injected",
+            event_id: event.id,
+            label: "Department / Branch",
+            field_type: "text",
+            required: true,
+            position: formFields.length + 1,
+            placeholder: "e.g. Computer Science, AI & DS, ECE",
+          } as FormField);
+        }
+        if (!hasYear) {
+          extra.push({
+            id: "student-year-injected",
+            event_id: event.id,
+            label: "Year of Study",
+            field_type: "text",
+            required: true,
+            position: formFields.length + 2,
+            placeholder: "e.g. 1st Year, 2nd Year, 3rd Year, 4th Year, Post Graduate",
+          } as FormField);
+        }
+        fields = [...formFields, ...extra];
+      }
     }
 
-    const hasCollege = formFields.some(f => /college|university|clg|institution/i.test(f.label));
-    const hasDept = formFields.some(f => /department|dept|branch/i.test(f.label));
-    const hasYear = formFields.some(f => /year of study|academic year/i.test(f.label));
-
-    if (!hasCollege || !hasDept || !hasYear) {
-      const extra: FormField[] = [];
-      if (!hasCollege) {
-        extra.push({
-          id: "student-college-injected",
-          event_id: event.id,
-          label: "College / University",
-          field_type: "text",
-          required: true,
-          position: formFields.length,
-          placeholder: "e.g. Stanford University / IIT Madras",
-        } as FormField);
-      }
-      if (!hasDept) {
-        extra.push({
-          id: "student-dept-injected",
-          event_id: event.id,
-          label: "Department / Branch",
-          field_type: "text",
-          required: true,
-          position: formFields.length + 1,
-          placeholder: "e.g. Computer Science, AI & DS, ECE",
-        } as FormField);
-      }
-      if (!hasYear) {
-        extra.push({
-          id: "student-year-injected",
-          event_id: event.id,
-          label: "Year of Study",
-          field_type: "text",
-          required: true,
-          position: formFields.length + 2,
-          placeholder: "e.g. 1st Year, 2nd Year, 3rd Year, 4th Year, Post Graduate",
-        } as FormField);
-      }
-      return [...formFields, ...extra];
-    }
-
-    const fieldsToUse = formFields || [];
-    // Always filter out Company and Job Title
-    return fieldsToUse.filter((f) => !/^(company|job title)$/i.test(f.label.trim()));
+    // Always filter out Company and Job Title from all events
+    return fields.filter((f) => !/^(company|job title)$/i.test(f.label.trim()));
   }, [event, formFields, isHackathon]);
 
   // Show spinner while the EVENT is loading, but never hang indefinitely
