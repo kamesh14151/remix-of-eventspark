@@ -38,6 +38,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       subject: customSubject, 
       message, 
       flyerUrl, 
+      hostLogoUrl,
+      logo_url,
+      emailFromName,
+      senderName,
       eventDate, 
       eventLocation, 
       eventEndDate, 
@@ -48,9 +52,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const defaultWhatsappGroup = "https://chat.whatsapp.com/HHkiFng9E0KHsTBuT3qPcK?s=sw&p=a&mlu=4&ilr=4&iam=2";
     const targetWhatsappUrl = whatsappGroupUrl || defaultWhatsappGroup;
 
-    const effectiveSenderName = (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") || eventTitle || "Crack";
+    // Configurable email sender name: Host configured > Host/Company Name > Event Title > Crack
+    const configuredSender = (senderName || emailFromName || "").toString().trim();
+    const effectiveSenderName = (configuredSender && configuredSender !== "Crack" && configuredSender !== "EventSpark" ? configuredSender : "") ||
+      (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") ||
+      eventTitle || 
+      "Crack";
     const safeSenderName = effectiveSenderName.replace(/["\r\n]/g, "").trim() || "Crack";
-    const targetHostName = (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") || eventTitle || "Crack";
+    const targetHostName = (configuredSender && configuredSender !== "Crack" && configuredSender !== "EventSpark" ? configuredSender : "") ||
+      (hostName && hostName !== "Crack" && hostName !== "EventSpark" ? hostName : "") || 
+      eventTitle || 
+      "Crack";
 
     const recipientList: string[] = Array.isArray(emails) && emails.length > 0 
       ? emails 
@@ -166,13 +178,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .map((p: string) => `<p style="margin: 0 0 16px 0; line-height: 1.6;">${p.replace(/\n/g, "<br />")}</p>`)
         .join("");
 
-      const topLogo = flyerUrl || logoUrl;
+      const topLogo = hostLogoUrl || logo_url || flyerUrl || logoUrl;
       htmlContent = `
         <!DOCTYPE html>
         <html lang="en" dir="ltr">
           <body style="background-color: #f3f4f6; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif; margin: 0; padding: 24px 12px;">
             <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #E5E7EB; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-              ${flyerUrl ? `
+              ${hostLogoUrl || logo_url ? `
+                <div style="background-color: #ffffff; padding: 24px; text-align: center; border-bottom: 1px solid #F3F4F6;">
+                  <img src="${topLogo}" alt="${eventTitle || 'Logo'}" style="max-height: 64px; max-width: 200px; object-fit: contain; display: inline-block;" />
+                </div>
+              ` : flyerUrl ? `
                 <div style="width: 100%; max-height: 220px; overflow: hidden; background-color: #111827; text-align: center;">
                   <img src="${flyerUrl}" alt="${eventTitle || 'Event'}" style="width: 100%; max-height: 220px; object-fit: cover; display: block;" />
                 </div>
@@ -219,14 +235,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `;
     } else if (type === "registration") {
       subject = customSubject || `You're registered for ${eventTitle || "the event"}!`;
-      const topLogo = flyerUrl || logoUrl;
+      const topLogo = hostLogoUrl || logo_url || flyerUrl || logoUrl;
       htmlContent = `
         <!DOCTYPE html>
         <html lang="en" dir="ltr">
           <body style="background-color: #ffffff; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto; padding: 20px 40px;">
               <div style="text-align: center; margin-bottom: 32px;">
-                <img src="${topLogo}" alt="Event Logo" width="80" height="80" style="display: block; margin: 0 auto 16px auto; border-radius: 12px; object-fit: cover;" />
+                <img src="${topLogo}" alt="Host Logo" width="80" height="80" style="display: block; margin: 0 auto 16px auto; border-radius: 12px; object-fit: contain; max-height: 80px;" />
                 <h1 style="font-size: 28px; font-weight: bold; color: #020304; margin: 0 0 16px;">
                   Registration Confirmed!
                 </h1>
@@ -293,7 +309,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Header: Logo
         try {
-          const topLogo = flyerUrl || logoUrl;
+          const topLogo = hostLogoUrl || logo_url || flyerUrl || logoUrl;
           const logoRes = await fetch(topLogo);
           const logoArrayBuffer = await logoRes.arrayBuffer();
           const bytes = new Uint8Array(logoArrayBuffer);

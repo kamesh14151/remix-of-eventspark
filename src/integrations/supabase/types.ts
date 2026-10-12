@@ -79,6 +79,7 @@ export type Database = {
           min_team_size: number | null
           team_pricing: string | null
           problem_statements: Json | null
+          email_from_name: string | null
         }
         Insert: {
           background_image_url?: string | null
@@ -109,6 +110,7 @@ export type Database = {
           min_team_size?: number | null
           team_pricing?: string | null
           problem_statements?: Json | null
+          email_from_name?: string | null
         }
         Update: {
           background_image_url?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           min_team_size?: number | null
           team_pricing?: string | null
           problem_statements?: Json | null
+          email_from_name?: string | null
         }
         Relationships: []
       }
@@ -192,6 +195,7 @@ export type Database = {
           social_links: Json | null
           updated_at: string
           website: string | null
+          email_from_name: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -204,6 +208,7 @@ export type Database = {
           social_links?: Json | null
           updated_at?: string
           website?: string | null
+          email_from_name?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -216,6 +221,7 @@ export type Database = {
           social_links?: Json | null
           updated_at?: string
           website?: string | null
+          email_from_name?: string | null
         }
         Relationships: []
       }

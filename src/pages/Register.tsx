@@ -982,6 +982,8 @@ const Register = () => {
             venueDetails: event.location_value || "",
             eventDescription: event.description || "",
             hostName: (event as any).profiles?.company || (event as any).profiles?.full_name || event.name || "Crack",
+            emailFromName: (event as any).email_from_name || (event as any).profiles?.email_from_name,
+            hostLogoUrl: event.logo_url || (event as any).profiles?.avatar_url || event.background_image_url,
             amount: finalData.razorpay_payment_id ? Number(finalData.razorpay_amount || 0) : undefined,
             paymentId: finalData.razorpay_payment_id,
             registrationId,

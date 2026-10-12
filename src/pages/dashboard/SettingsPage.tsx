@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Send, UserPlus, Plus, Trash2, Sun, Moon, Monitor, Copy, ExternalLink } from "lucide-react";
+import { Loader2, Send, UserPlus, Plus, Trash2, Sun, Moon, Monitor, Copy, ExternalLink, Upload, X } from "lucide-react";
 import { useTheme } from "next-themes";
+import { supabase } from "@/integrations/supabase/client";
 
 const SOCIAL_PLATFORMS = [
   "Twitter / X", "LinkedIn", "Instagram", "Facebook", "YouTube", "TikTok", "GitHub",
@@ -32,6 +33,9 @@ const SettingsPage = () => {
   const [companyDescription, setCompanyDescription] = useState("");
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [companySlug, setCompanySlug] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [emailFromName, setEmailFromName] = useState("");
   const [initialized, setInitialized] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
@@ -41,11 +45,32 @@ const SettingsPage = () => {
     setCompany(profile.company || "");
     setWebsite((profile as any).website || "");
     setCompanyDescription((profile as any).company_description || "");
+    setAvatarUrl((profile as any).avatar_url || null);
+    setEmailFromName((profile as any).email_from_name || "");
     const links = (profile as any).social_links;
     setSocialLinks(Array.isArray(links) ? links : []);
     setCompanySlug((profile as any).company_slug || "");
     setInitialized(true);
   }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `avatars/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("event-assets").upload(path, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("event-assets").getPublicUrl(path);
+      setAvatarUrl(urlData.publicUrl);
+      toast.success("Logo uploaded!");
+    } catch (err: any) {
+      toast.error(err.message || "Logo upload failed");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -56,6 +81,8 @@ const SettingsPage = () => {
         website,
         company_description: companyDescription,
         social_links: socialLinks,
+        avatar_url: avatarUrl,
+        email_from_name: emailFromName.trim() || undefined,
         ...(slug ? { company_slug: slug } : {}),
       } as any);
       if (slug) setCompanySlug(slug);
@@ -116,9 +143,44 @@ const SettingsPage = () => {
                 <Input value={user?.email || ""} disabled className="rounded-full" />
               </div>
             </div>
+            {/* Host Logo Upload */}
+            <div className="space-y-2">
+              <Label>Company / Organization Logo</Label>
+              <p className="text-xs text-muted-foreground">This logo appears at the top of emails and on your public company page.</p>
+              {avatarUrl ? (
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-2xl border border-border flex items-center justify-center p-1.5 bg-background shadow-sm">
+                    <img src={avatarUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setAvatarUrl(null)} className="text-xs rounded-full">
+                    <X className="w-3.5 h-3.5 mr-1" /> Remove
+                  </Button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-3 p-3.5 rounded-xl border border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors w-full sm:w-auto">
+                  {uploadingAvatar ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /> : <Upload className="w-5 h-5 text-muted-foreground" />}
+                  <span className="text-xs font-medium text-muted-foreground">Upload Organization Logo</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+                </label>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label>Company</Label>
               <Input value={company} onChange={e => setCompany(e.target.value)} className="rounded-full" />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Default Email From Name</Label>
+              <Input
+                value={emailFromName}
+                onChange={e => setEmailFromName(e.target.value)}
+                placeholder={company || fullName || "e.g. Sona College Hackathon Team"}
+                className="rounded-full"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Attendees will receive emails from: <strong>{emailFromName.trim() || company || fullName || "Crack"}</strong> &lt;eventspark@ajstudioz.co.in&gt;
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Website</Label>

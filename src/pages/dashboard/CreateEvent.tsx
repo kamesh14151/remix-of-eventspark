@@ -132,7 +132,10 @@ const CreateEvent = () => {
     setFields(prev => prev.map((f, i) => i === index ? { ...f, required: !f.required } : f));
   };
   const [flyerUrl, setFlyerUrl] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [emailFromName, setEmailFromName] = useState("");
   const [colorMode, setColorMode] = useState<"light" | "dark">("light");
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
@@ -187,6 +190,8 @@ const CreateEvent = () => {
       }
 
       setFlyerUrl(existingEvent.background_image_url || null);
+      setLogoUrl(existingEvent.logo_url || null);
+      setEmailFromName((existingEvent as any).email_from_name || "");
       setInitialized(true);
     }
   }, [isEditMode, existingEvent, initialized]);
@@ -218,6 +223,25 @@ const CreateEvent = () => {
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `logos/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("event-assets").upload(path, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("event-assets").getPublicUrl(path);
+      setLogoUrl(urlData.publicUrl);
+      toast.success("Host logo uploaded!");
+    } catch (err: any) {
+      toast.error(err.message || "Logo upload failed");
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -281,6 +305,8 @@ const CreateEvent = () => {
         min_team_size: Math.min(parseInt(minTeamSize) || 1, parseInt(maxTeamSize) || 1),
         team_pricing: teamPricing,
         background_image_url: flyerUrl || undefined,
+        logo_url: logoUrl || undefined,
+        email_from_name: emailFromName.trim() || undefined,
         color_mode: colorMode,
         status: "live",
       } as any;
@@ -797,6 +823,60 @@ const CreateEvent = () => {
           {/* Step 2: Branding */}
           {step === 2 && (
             <div className="space-y-5">
+              {/* Section: Host / Event Logo */}
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <h3 className="font-display font-semibold text-base mb-0.5">Host / Brand Logo</h3>
+                    <p className="text-xs text-muted-foreground">This logo appears at the very top of attendee confirmation emails and tickets.</p>
+                  </div>
+
+                  {logoUrl ? (
+                    <div className="relative inline-block">
+                      <div className="h-24 w-24 rounded-2xl border border-border flex items-center justify-center p-2 bg-background shadow-sm">
+                        <img src={logoUrl} alt="Host Logo" className="max-h-full max-w-full object-contain" />
+                      </div>
+                      <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => setLogoUrl(null)}>
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-28 rounded-xl border-2 border-dashed border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+                      {uploadingLogo ? <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /> : (
+                        <>
+                          <Upload className="w-5 h-5 text-muted-foreground mb-1" />
+                          <span className="text-sm font-medium text-muted-foreground">Click to upload Host Logo</span>
+                          <span className="text-xs text-muted-foreground/60">Square PNG / JPG recommended</span>
+                        </>
+                      )}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                    </label>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Section: Email Sender Configuration */}
+              <Card>
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <h3 className="font-display font-semibold text-base mb-0.5">Email Sender Name (From:)</h3>
+                    <p className="text-xs text-muted-foreground">The display name attendees see in their inbox for registration emails and announcements.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Custom From Name</Label>
+                    <Input
+                      placeholder={profile?.company || name || "e.g. Sona College Hackathon Team"}
+                      value={emailFromName}
+                      onChange={(e) => setEmailFromName(e.target.value)}
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Inbox preview: <strong>{emailFromName.trim() || profile?.company || name || "Crack"}</strong> &lt;eventspark@ajstudioz.co.in&gt;
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardContent className="p-6 space-y-4">
                   <div>
